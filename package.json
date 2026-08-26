@@ -1,0 +1,17 @@
+{
+  "name": "tigermint-tcg-boilerplate",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Tigermint TCG Boilerplate — a hackable trading card game engine where TON NFTs become playable cards",
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev -w @tcg/client",
+    "dev:server": "npm run dev -w @tcg/server",
+    "build": "npm run build -w @tcg/client",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "test": "npm test -w @tcg/shared",
+    "mint-pack": "node scripts/mint-pack.mjs"
+  }
+}

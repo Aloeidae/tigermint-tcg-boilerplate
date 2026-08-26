@@ -1,0 +1,197 @@
+{
+    "name":  "Snugglefang Woods",
+    "_readme":  "EXAMPLE manifest (a cute-animal demo set). To use your own pack: copy this file to pack.json in this folder, replace the cards with your own names/stats/skills, and drop your images next to it. Cards are full-art by default: the image IS the card and the game only overlays cost/attack/health badges. Skills and effects are matched by name against the registries in @tcg/shared. rarity (LEGENDARY/EPIC/RARE/COMMON) sets each card's pull-weight tier when you mint the pack on TigerMint — run `npm run mint-pack` to launch this exact file as a real drop. Two optional per-card fields: description (flavor text, max 500 chars, minted as the item description and shown as card text locally) and editions (that card's print run — how many copies exist in the drop; rarity-tier defaults apply when absent). Deck access follows rarity: COMMON (or unset) cards form the basic deck everyone plays free; RARE/EPIC/LEGENDARY cards are mint-only — players must pull the NFT to play them (they show locked in the deck builder until owned). A per-card boolean `basic` overrides that rule either way (see Snowshoe Archer: a rare kept free). pack.json and your images are gitignored, so your pack stays local unless you choose to commit it.",
+    "cards":  [
+                  {
+                      "name":  "Cinder Kit",
+                      "type":  "creature",
+                      "cost":  1,
+                      "attack":  2,
+                      "health":  1,
+                      "skills":  [
+                                     "Haste"
+                                 ],
+                      "art":  "cinder-kit.jpeg",
+                      "rarity":  "COMMON",
+                      "description":  "Too fast to see, too warm to scold.",
+                      "editions":  6
+                  },
+                  {
+                      "name":  "Hedgeling",
+                      "type":  "creature",
+                      "cost":  1,
+                      "attack":  1,
+                      "health":  3,
+                      "skills":  [
+                                     "Guard"
+                                 ],
+                      "art":  "hedgeling.jpeg",
+                      "rarity":  "COMMON"
+                  },
+                  {
+                      "name":  "River Otter Medic",
+                      "type":  "creature",
+                      "cost":  2,
+                      "attack":  2,
+                      "health":  3,
+                      "skills":  [
+                                     "Lifelink"
+                                 ],
+                      "art":  "river-otter-medic.jpeg",
+                      "rarity":  "COMMON"
+                  },
+                  {
+                      "name":  "Snowshoe Archer",
+                      "type":  "creature",
+                      "cost":  2,
+                      "attack":  3,
+                      "health":  2,
+                      "skills":  [
+                                     "First Strike"
+                                 ],
+                      "art":  "snowshoe-archer.jpeg",
+                      "rarity":  "RARE",
+                      "basic":  true
+                  },
+                  {
+                      "name":  "Badger Bruiser",
+                      "type":  "creature",
+                      "cost":  3,
+                      "attack":  4,
+                      "health":  3,
+                      "art":  "badger-bruiser.jpeg",
+                      "rarity":  "RARE"
+                  },
+                  {
+                      "name":  "Garden Adder",
+                      "type":  "creature",
+                      "cost":  3,
+                      "attack":  1,
+                      "health":  2,
+                      "skills":  [
+                                     "Deathtouch"
+                                 ],
+                      "art":  "garden-adder.jpeg",
+                      "rarity":  "RARE"
+                  },
+                  {
+                      "name":  "Moss Tortoise",
+                      "type":  "creature",
+                      "cost":  4,
+                      "attack":  3,
+                      "health":  6,
+                      "skills":  [
+                                     "Guard",
+                                     "Regenerate 2"
+                                 ],
+                      "art":  "moss-tortoise.jpeg",
+                      "rarity":  "EPIC"
+                  },
+                  {
+                      "name":  "Gale Falcon",
+                      "type":  "creature",
+                      "cost":  5,
+                      "attack":  5,
+                      "health":  5,
+                      "skills":  [
+                                     "Haste"
+                                 ],
+                      "art":  "gale-falcon.jpeg",
+                      "rarity":  "EPIC"
+                  },
+                  {
+                      "name":  "Grandfather Grizzly",
+                      "type":  "creature",
+                      "cost":  6,
+                      "attack":  7,
+                      "health":  7,
+                      "skills":  [
+                                     "Armor 1"
+                                 ],
+                      "art":  "grandfather-grizzly.jpeg",
+                      "rarity":  "LEGENDARY",
+                      "description":  "The forest keeps one story it never retells.",
+                      "editions":  1
+                  },
+                  {
+                      "name":  "Twig Sword",
+                      "type":  "equipment",
+                      "cost":  1,
+                      "attack":  2,
+                      "health":  0,
+                      "art":  "twig-sword.jpeg",
+                      "rarity":  "COMMON"
+                  },
+                  {
+                      "name":  "Walnut Buckler",
+                      "type":  "equipment",
+                      "cost":  1,
+                      "attack":  0,
+                      "health":  3,
+                      "art":  "walnut-buckler.jpeg",
+                      "rarity":  "COMMON"
+                  },
+                  {
+                      "name":  "Honeyed Claws",
+                      "type":  "equipment",
+                      "cost":  3,
+                      "attack":  3,
+                      "health":  1,
+                      "art":  "honeyed-claws.jpeg",
+                      "rarity":  "RARE"
+                  },
+                  {
+                      "name":  "Zoomie Whistle",
+                      "type":  "equipment",
+                      "cost":  2,
+                      "attack":  1,
+                      "health":  0,
+                      "skills":  [
+                                     "Haste"
+                                 ],
+                      "art":  "zoomie-whistle.jpeg",
+                      "rarity":  "COMMON"
+                  },
+                  {
+                      "name":  "Angry Bee Swarm",
+                      "type":  "spell",
+                      "cost":  2,
+                      "effect":  "damage 3",
+                      "art":  "angry-bee-swarm.jpeg",
+                      "rarity":  "RARE"
+                  },
+                  {
+                      "name":  "Cozy Nap",
+                      "type":  "spell",
+                      "cost":  2,
+                      "effect":  "heal 4",
+                      "art":  "cozy-nap.jpeg",
+                      "rarity":  "COMMON"
+                  },
+                  {
+                      "name":  "Snack Time",
+                      "type":  "spell",
+                      "cost":  2,
+                      "effect":  "draw 2",
+                      "art":  "snack-time.jpeg",
+                      "rarity":  "COMMON"
+                  },
+                  {
+                      "name":  "Battle Squeak",
+                      "type":  "spell",
+                      "cost":  1,
+                      "effect":  "buffAttack 2",
+                      "art":  "battle-squeak.jpeg",
+                      "rarity":  "COMMON"
+                  },
+                  {
+                      "name":  "Skunk Bomb",
+                      "type":  "spell",
+                      "cost":  4,
+                      "effect":  "aoeDamage 2",
+                      "art":  "skunk-bomb.jpeg",
+                      "rarity":  "EPIC"
+                  }
+              ],
+    "description":  "A cozy woodland trading card set. Pull a critter, build a deck, battle your friends."
+}

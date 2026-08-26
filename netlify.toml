@@ -1,0 +1,12 @@
+# Static hosting for the game client (Netlify; the same shape works on any
+# static host). Set your env (VITE_SERVER_URL, VITE_NFT_COLLECTION, …) in the
+# host's dashboard — Vite bakes them in at build time.
+[build]
+  command = "npm run build"
+  publish = "packages/client/dist"
+
+# Single-page app: every route serves the game.
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

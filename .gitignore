@@ -1,0 +1,9 @@
+node_modules/
+dist/
+*.log
+.env
+.env.local
+
+# your local card pack stays yours — only the example manifest is tracked
+packages/client/public/pack/*
+!packages/client/public/pack/pack.example.json

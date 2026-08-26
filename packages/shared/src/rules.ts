@@ -1,0 +1,122 @@
+import { DECK_SIZE, MAX_HAND, MAX_MANA, MAX_ROW, OPENING_HAND, STARTING_LIFE } from './constants.js';
+
+/**
+ * Every rules knob the engine reads at runtime. Rules travel inside GameState,
+ * so the server, both clients, and the AI always agree on them. Tweak these —
+ * or add your own fields and read them in engine/combat/helpers — to shape
+ * your game after whichever TCG you're channeling.
+ */
+export interface RulesConfig {
+  startingLife: number;
+  deckSize: number;
+  openingHand: number;
+  maxHand: number;
+  maxRow: number;
+  manaCap: number;
+  /** Does the player who goes first also draw on turn 1? (MTG: no) */
+  firstPlayerDraws: boolean;
+  /** Creatures can't attack the turn they are summoned. */
+  summoningSickness: boolean;
+  /** How many attacks each creature can make per turn. */
+  attacksPerTurn: number;
+  /**
+   * Enemy creatures "guard" their player: while any are on the row, you must
+   * attack creatures — the face is off-limits. (Think taunt-everything.)
+   */
+  mustAttackCreaturesFirst: boolean;
+  /** Defending creatures strike back when attacked. */
+  retaliation: boolean;
+  /**
+   * Drawing from an empty deck: 'lose' the game instantly (MTG-style), or
+   * take 'damage' that grows by 1 with every empty draw (Hearthstone-style).
+   */
+  fatigue: 'lose' | 'damage';
+  /**
+   * Each player may shuffle back their opening hand once, during the first
+   * round, and redraw the same number of cards (a free mulligan).
+   */
+  mulligan: boolean;
+  /**
+   * How combat works.
+   * 'targeted': the attacker picks each attack's target — an enemy creature
+   *   or the face (Hearthstone-style).
+   * 'blockers': MTG-style — attacks are declared against the PLAYER, the
+   *   defender assigns blockers, blocked attackers fight their blocker and
+   *   unblocked ones hit the face. Attackers never choose creature targets.
+   */
+  combatStyle: 'targeted' | 'blockers';
+}
+
+export const DEFAULT_RULES: RulesConfig = {
+  startingLife: STARTING_LIFE,
+  deckSize: DECK_SIZE,
+  openingHand: OPENING_HAND,
+  maxHand: MAX_HAND,
+  maxRow: MAX_ROW,
+  manaCap: MAX_MANA,
+  firstPlayerDraws: false,
+  summoningSickness: true,
+  attacksPerTurn: 1,
+  mustAttackCreaturesFirst: false,
+  retaliation: true,
+  fatigue: 'lose',
+  mulligan: false,
+  combatStyle: 'targeted',
+};
+
+/**
+ * Ready-made variants flavored after popular TCGs. The menu offers these;
+ * add your own preset here and it appears automatically.
+ */
+export const RULE_PRESETS: Record<string, { label: string; description: string; rules: RulesConfig }> = {
+  duel: {
+    label: 'Classic Duel',
+    description: 'MTG-style combat: attack the player, the defender declares blockers. Free mulligan. Empty-deck draw loses.',
+    rules: { ...DEFAULT_RULES, mulligan: true, combatStyle: 'blockers' },
+  },
+  guarded: {
+    label: 'Guarded Arena',
+    description: 'Creatures guard their player: clear the row before going face. Fatigue deals growing damage. 30 life.',
+    rules: { ...DEFAULT_RULES, mustAttackCreaturesFirst: true, fatigue: 'damage', startingLife: 30 },
+  },
+  blitz: {
+    label: 'Blitz',
+    description: 'No summoning sickness — creatures charge immediately. 15 life, 4-card opening hand.',
+    rules: { ...DEFAULT_RULES, summoningSickness: false, startingLife: 15, openingHand: 4 },
+  },
+  attrition: {
+    label: 'Attrition',
+    description: 'The long game: 40 life, fatigue deals growing damage, defenders always strike back, free mulligan.',
+    rules: { ...DEFAULT_RULES, startingLife: 40, fatigue: 'damage', mulligan: true },
+  },
+};
+
+/**
+ * Merge a (possibly untrusted) partial config onto the defaults, keeping only
+ * known keys with sane types and clamped ranges. The PvP server runs client
+ * -submitted rules through this.
+ */
+export function mergeRules(partial?: Partial<RulesConfig> | null): RulesConfig {
+  const r = { ...DEFAULT_RULES };
+  if (!partial || typeof partial !== 'object') return r;
+  const num = (v: unknown, lo: number, hi: number, fallback: number): number =>
+    typeof v === 'number' && Number.isFinite(v) ? Math.max(lo, Math.min(hi, Math.round(v))) : fallback;
+  const bool = (v: unknown, fallback: boolean): boolean => (typeof v === 'boolean' ? v : fallback);
+
+  r.startingLife = num(partial.startingLife, 1, 999, r.startingLife);
+  r.deckSize = num(partial.deckSize, 5, 200, r.deckSize);
+  r.openingHand = num(partial.openingHand, 0, 10, r.openingHand);
+  r.maxHand = num(partial.maxHand, 1, 20, r.maxHand);
+  r.maxRow = num(partial.maxRow, 1, 8, r.maxRow);
+  r.manaCap = num(partial.manaCap, 1, 20, r.manaCap);
+  r.attacksPerTurn = num(partial.attacksPerTurn, 1, 9, r.attacksPerTurn);
+  r.firstPlayerDraws = bool(partial.firstPlayerDraws, r.firstPlayerDraws);
+  r.summoningSickness = bool(partial.summoningSickness, r.summoningSickness);
+  r.mustAttackCreaturesFirst = bool(partial.mustAttackCreaturesFirst, r.mustAttackCreaturesFirst);
+  r.retaliation = bool(partial.retaliation, r.retaliation);
+  r.fatigue = partial.fatigue === 'damage' ? 'damage' : partial.fatigue === 'lose' ? 'lose' : r.fatigue;
+  r.mulligan = bool(partial.mulligan, r.mulligan);
+  r.combatStyle =
+    partial.combatStyle === 'blockers' ? 'blockers' : partial.combatStyle === 'targeted' ? 'targeted' : r.combatStyle;
+  return r;
+}
