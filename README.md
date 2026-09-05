@@ -370,10 +370,16 @@ spectating, reconnects, replays, pulls, the Mini App — works unchanged.
 
 **Content pipeline:** a league card set is just a `pack.json` whose cards
 carry `game` blocks — drop one into `packages/client/public/pack/` and the
-League presets build starter decks from it (owned NFTs inherit their `game`
-block from the pack by card name, so minted cards stay lean). No pack? A
-built-in demo set (`pokemon/demo.ts`) plays out of the box — it doubles as a
-worked example of every mechanic.
+League presets build starter decks from it. Each card can also carry an
+`attributes` array (display traits like Stage/HP/Moves plus a stable
+`Card ID`): TigerMint's card-set wizard mints those verbatim, pins the
+manifest at launch, and serves it at
+`/api/v1/collections/{slug}/pack.json` — so with `VITE_TIGERMINT_SLUG` set,
+the game fetches the full card set from TigerMint when no local pack ships,
+and owned NFTs match back to their rules by the minted `Card ID` trait
+(name/id fallbacks). No pack anywhere? A built-in demo set
+(`pokemon/demo.ts`) plays out of the box — it doubles as a worked example of
+every mechanic.
 
 Two deliberate simplifications keep the flow one-command-per-action: deck
 searches and "you may…" choices auto-pick a sensible option

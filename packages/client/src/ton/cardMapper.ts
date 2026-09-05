@@ -159,15 +159,27 @@ function skillsFor(nft: NftItem, h: number, type: 'creature' | 'equipment', full
 
 /**
  * Give an NFT card its pokemon-mode definition by matching it against the
- * local pack (the generator's pack.json ships a full `game` block per card).
- * Minted metadata stays lean; the pack manifest is the game-rules source of
- * truth, matched by card name (a "Card Name" trait survives launchpad
- * renaming) or id.
+ * pack manifest (local, or served by TigerMint per slug — either way the
+ * generator's pack.json carries a full `game` block per card). The minted
+ * "Card ID" trait is the stable key; card name (a "Card Name" trait survives
+ * launchpad renaming) and id are the fallbacks.
  */
-export function withGameBlock(card: CardDef, pack: { cards: CardDef[] } | null | undefined): CardDef {
+export function withGameBlock(
+  card: CardDef,
+  pack: { cards: CardDef[] } | null | undefined,
+  cardId?: string
+): CardDef {
   if (card.game || !pack) return card;
-  const match = pack.cards.find((p) => p.game && (p.id === card.id || p.name === card.name));
+  const match =
+    (cardId ? pack.cards.find((p) => p.game && p.id === cardId) : undefined) ??
+    pack.cards.find((p) => p.game && (p.id === card.id || p.name === card.name));
   return match ? { ...card, game: match.game } : card;
+}
+
+/** The stable per-card key TigerMint card sets mint as a "Card ID" trait. */
+export function nftCardId(nft: NftItem): string | undefined {
+  const found = nft.attributes.find((a) => a.trait_type.toLowerCase() === 'card id');
+  return found ? String(found.value) : undefined;
 }
 
 /**

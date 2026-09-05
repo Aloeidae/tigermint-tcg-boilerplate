@@ -52,6 +52,15 @@ export const CONFIG = {
   tigermintApiKey: (import.meta.env.VITE_TIGERMINT_API_KEY as string | undefined) ?? '',
   tigermintApiBase:
     (import.meta.env.VITE_TIGERMINT_API_BASE as string | undefined) ?? 'https://mint.tendytiger.lol',
+
+  /**
+   * Explicit pack-manifest URL(s), comma-separated. TigerMint pins the
+   * pack.json a card set was launched from and serves it at
+   * /api/v1/collections/{slug}/pack.json — with slugs configured above that
+   * URL is derived automatically, so this override is only needed for a
+   * manifest hosted elsewhere. A local public/pack/pack.json always wins.
+   */
+  packManifestUrls: parseList(import.meta.env.VITE_PACK_MANIFEST_URL as string | undefined),
   /**
    * Whether the pull panel starts shown or hidden ('shown' | 'hidden').
    * A player's own hide/show choice (localStorage) always wins after that.

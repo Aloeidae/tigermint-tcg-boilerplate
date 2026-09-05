@@ -152,6 +152,15 @@ arrows (`switchPack` in MenuScene, `#pull-body` slide in index.html).
   `state.rngCursor` — never `Math.random`. Legacy `skills` are stripped from
   board defs in this mode; behavior comes only from the `game` block. Deck
   searches and "you may" choices auto-pick deterministically (no choice UI).
+- Pack manifests can come from TigerMint: card sets launched from a
+  pack.json are served byte-for-byte at
+  `/api/v1/collections/{slug}/pack.json` (public, CORS) — `loadLocalPack()`
+  falls back to it per configured slug when no local pack exists (remote
+  bare-filename art is dropped → placeholder; NFTs bring real images).
+  Minted NFTs match back to pack entries by their `Card ID` trait
+  (`nftCardId` + `withGameBlock` in cardMapper). Manifest `attributes`
+  arrays mint verbatim on TigerMint (caps: ≤50 traits, values ≤256 chars) —
+  never emit a `Rarity` trait_type there, TigerMint appends its own.
 - The design space is chosen ONCE at boot from window orientation
   (`layout.ts`: landscape 1920×1080, portrait 810×1440 for phones/Telegram
   Mini Apps). All scene positions come from layout.ts; Hud/HandLayout take

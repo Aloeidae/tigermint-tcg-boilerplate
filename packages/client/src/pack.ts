@@ -1,4 +1,5 @@
 import { DECK_SIZE, findEffectKey, findSkillKey, type CardDef, type GameBlock, type SkillRef } from '@tcg/shared';
+import { CONFIG } from './config.js';
 
 /**
  * Local card pack loader — play your custom cards BEFORE minting them.
@@ -63,6 +64,13 @@ interface PackCardJson {
    * The card-set generator writes these; see shared/src/pokemon/types.ts.
    */
   game?: GameBlock;
+  /**
+   * Display traits TigerMint mints verbatim (Card ID, Stage, HP, Move 1…).
+   * The game ignores them locally — minted NFTs match back to this card via
+   * their "Card ID" trait instead. (TigerMint appends "Rarity" on its own,
+   * so manifests should not include that trait_type here.)
+   */
+  attributes?: { trait_type: string; value: string | number }[];
 }
 
 export interface LocalPack {
@@ -74,23 +82,53 @@ export interface LocalPack {
 }
 
 export async function loadLocalPack(): Promise<LocalPack | null> {
+  const local = await fetchPack('/pack/pack.json', 'Custom pack', false);
+  if (local) return local;
+
+  // No local pack: TigerMint pins the pack.json a card set was launched from
+  // and serves it byte-for-byte at /api/v1/collections/{slug}/pack.json
+  // (public, CORS) — so configured slugs hydrate the full card set, `game`
+  // blocks included, with nothing bundled in the client. Multiple slugs
+  // merge into one pool (multi-pack boosters).
+  const urls =
+    CONFIG.packManifestUrls.length > 0
+      ? CONFIG.packManifestUrls
+      : CONFIG.tigermintSlugs.map(
+          (slug) => `${CONFIG.tigermintApiBase}/api/v1/collections/${encodeURIComponent(slug)}/pack.json`
+        );
+  let merged: LocalPack | null = null;
+  for (const url of urls) {
+    const pack = await fetchPack(url, 'Card set', true);
+    if (!pack) continue;
+    if (!merged) {
+      merged = pack;
+    } else {
+      const seen = new Set(merged.cards.map((c) => c.id));
+      merged.cards.push(...pack.cards.filter((c) => !seen.has(c.id)));
+      merged.basicCards.push(...pack.basicCards.filter((c) => !seen.has(c.id)));
+    }
+  }
+  return merged;
+}
+
+async function fetchPack(url: string, fallbackName: string, remote: boolean): Promise<LocalPack | null> {
   try {
-    const res = await fetch('/pack/pack.json', { cache: 'no-cache' });
+    const res = await fetch(url, { cache: 'no-cache' });
     if (!res.ok) return null;
     const data = (await res.json()) as { name?: string; cards?: PackCardJson[] };
     if (!Array.isArray(data.cards)) return null;
     const cards: CardDef[] = [];
     const basicCards: CardDef[] = [];
     data.cards.forEach((raw, index) => {
-      const card = toCardDef(raw, index);
+      const card = toCardDef(raw, index, remote);
       if (!card) return;
       cards.push(card);
       if (isBasic(raw)) basicCards.push(card);
     });
     if (cards.length === 0) return null;
-    return { name: data.name ?? 'Custom pack', cards, basicCards };
+    return { name: data.name ?? fallbackName, cards, basicCards };
   } catch {
-    return null; // no pack.json — that's fine, the demo deck covers it
+    return null; // no pack there — that's fine, the demo deck covers it
   }
 }
 
@@ -116,16 +154,21 @@ export function packDeck(pack: LocalPack): CardDef[] {
   return deck;
 }
 
-function toCardDef(raw: PackCardJson, index: number): CardDef | null {
+function toCardDef(raw: PackCardJson, index: number, remote = false): CardDef | null {
   if (!raw || typeof raw.name !== 'string') return null;
   const type = raw.type === 'creature' || raw.type === 'equipment' || raw.type === 'spell' ? raw.type : 'creature';
 
+  // A manifest fetched from TigerMint references art by bare filename; those
+  // files live on IPFS behind the minted items, not under /pack/ — leave the
+  // art unset (procedural placeholder) rather than point at a 404. Owned
+  // NFTs bring their own image URLs.
+  const bareArt = raw.art && !raw.art.startsWith('/') && !/^https?:\/\//.test(raw.art);
   const card: CardDef = {
     id: raw.id ?? `pack-${slug(raw.name)}-${index}`,
     name: raw.name,
     type,
     cost: clamp(raw.cost ?? 1, 1, 20),
-    art: raw.art ? (raw.art.startsWith('/') || /^https?:\/\//.test(raw.art) ? raw.art : `/pack/${raw.art}`) : undefined,
+    art: raw.art && !(remote && bareArt) ? (bareArt ? `/pack/${raw.art}` : raw.art) : undefined,
     fullArt: raw.fullArt !== false, // packs are full-art by default
     rarity: typeof raw.rarity === 'string' ? raw.rarity.toUpperCase() : undefined,
     text: raw.text ?? raw.description,

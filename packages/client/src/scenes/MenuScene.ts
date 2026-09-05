@@ -22,7 +22,7 @@ import {
   walletIndices,
 } from '../ton/pull.js';
 import { fetchNfts, shortAddress, type NftItem } from '../ton/nfts.js';
-import { nftToCard, withGameBlock } from '../ton/cardMapper.js';
+import { nftCardId, nftToCard, withGameBlock } from '../ton/cardMapper.js';
 import { CardSprite } from '../objects/CardSprite.js';
 import type { DeckPoolEntry } from './DeckScene.js';
 import { LocalAIConnection } from '../net/LocalAIConnection.js';
@@ -358,8 +358,9 @@ export class MenuScene extends Phaser.Scene {
       ...fromChain,
       ...fromTigermint.filter((n) => !seen.has(`${n.collection}#${n.index}`)),
     ];
-    // Pokemon-mode data rides along from the pack manifest (matched by name).
-    this.nftCards = nfts.map((n) => withGameBlock(nftToCard(n), this.pack));
+    // Pokemon-mode data rides along from the pack manifest (matched by the
+    // minted Card ID trait, with name/id fallbacks).
+    this.nftCards = nfts.map((n) => withGameBlock(nftToCard(n), this.pack, nftCardId(n)));
     this.rebuildDeck();
   }
 
