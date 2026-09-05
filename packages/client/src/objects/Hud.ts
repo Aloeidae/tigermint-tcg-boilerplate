@@ -13,6 +13,7 @@ const PHASE_LABELS: Record<Phase, string> = {
   combat: 'Combat',
   block: 'Blockers',
   main2: 'Second Main',
+  setup: 'Setup',
 };
 
 const PHASE_BUTTON: Record<Phase, string> = {
@@ -20,6 +21,7 @@ const PHASE_BUTTON: Record<Phase, string> = {
   combat: 'End Combat',
   block: 'Waiting…',
   main2: 'End Turn ➤',
+  setup: 'Waiting…',
 };
 
 /** Scene-supplied overrides for the contextual button and banner text. */
@@ -91,7 +93,11 @@ export class Hud {
     this.heart(g, L.heartX, L.cy, opp.life);
     this.statChip(g, L.chip1X, L.cy, '🂠', `${opp.handCount}`);
     this.statChip(g, L.chip2X, L.cy, '⿻', `${opp.deckCount}`);
-    this.manaText(L.manaX, L.cy, opp.mana, opp.maxMana);
+    // Pokemon mode has no mana — that slot shows prize progress instead
+    // (the heart doubles as "prizes left to give up").
+    const pokemon = view.rules.gameMode === 'pokemon';
+    if (pokemon) this.prizeText(L.manaX, L.cy, opp.prizesTaken ?? 0, view.rules.prizes);
+    else this.manaText(L.manaX, L.cy, opp.mana, opp.maxMana);
     const oppZone = this.scene.add.zone(L.portraitX, L.cy, 84, 84).setOrigin(0.5).setInteractive();
     oppZone.on('pointerdown', () => cb.onFaceClick(opp.id));
     this.container.add(oppZone);
@@ -106,7 +112,8 @@ export class Hud {
     this.heart(g, L.heartX, py, me.life);
     this.statChip(g, L.chip1X, py, '⿻', `${me.deckCount}`);
     this.statChip(g, L.chip2X, py, '✝', `${me.graveyardCount}`);
-    this.manaText(L.manaX, py, me.mana, me.maxMana, true);
+    if (pokemon) this.prizeText(L.manaX, py, me.prizesTaken ?? 0, view.rules.prizes, true);
+    else this.manaText(L.manaX, py, me.mana, me.maxMana, true);
     const myZone = this.scene.add.zone(L.portraitX, py, 84, 84).setOrigin(0.5).setInteractive();
     myZone.on('pointerdown', () => cb.onFaceClick(me.id));
     this.container.add(myZone);
@@ -239,6 +246,19 @@ export class Hud {
     const t = this.scene.add
       .text(x, y, `${icon} ${value}`, {
         fontFamily: THEME.fonts.body, fontSize: this.compact ? '19px' : '20px', color: THEME.hud.chipText,
+      })
+      .setOrigin(0.5);
+    this.container.add(t);
+  }
+
+  /** Pokemon mode: prizes taken toward the win (the mana slot's tenant). */
+  private prizeText(x: number, y: number, taken: number, total: number, big = false): void {
+    const t = this.scene.add
+      .text(x, y, `⭐ ${taken}/${total}`, {
+        fontFamily: THEME.fonts.body,
+        fontSize: this.compact ? (big ? '22px' : '19px') : big ? '24px' : '20px',
+        color: THEME.hud.mana,
+        fontStyle: 'bold',
       })
       .setOrigin(0.5);
     this.container.add(t);

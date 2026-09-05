@@ -1,5 +1,8 @@
 import Phaser from 'phaser';
-import { buildDemoDeck, DECK_SIZE, DEMO_CATALOG, padDeck, RULE_PRESETS, type CardDef, type RulesConfig } from '@tcg/shared';
+import {
+  buildDemoDeck, buildStarterPokemonDeck, DECK_SIZE, DEMO_CATALOG, padDeck,
+  POKEMON_DEMO_CARDS, RULE_PRESETS, type CardDef, type RulesConfig,
+} from '@tcg/shared';
 import { THEME } from '../theme.js';
 import { loadLocalPack, packDeck, type LocalPack } from '../pack.js';
 import { CONFIG } from '../config.js';
@@ -19,7 +22,7 @@ import {
   walletIndices,
 } from '../ton/pull.js';
 import { fetchNfts, shortAddress, type NftItem } from '../ton/nfts.js';
-import { nftToCard } from '../ton/cardMapper.js';
+import { nftToCard, withGameBlock } from '../ton/cardMapper.js';
 import { CardSprite } from '../objects/CardSprite.js';
 import type { DeckPoolEntry } from './DeckScene.js';
 import { LocalAIConnection } from '../net/LocalAIConnection.js';
@@ -261,7 +264,8 @@ export class MenuScene extends Phaser.Scene {
       return;
     }
     this.setError('');
-    const conn = WsConnection.queue(CONFIG.serverUrl, this.deck, this.playerName, this.rules);
+    const queueDeck = this.gameDeck();
+    const conn = WsConnection.queue(CONFIG.serverUrl, queueDeck, this.playerName, this.rules);
     this.pendingConn = conn;
     conn.onQueued = () => this.setBanner('Searching for an opponent on the same rules… (click Find Opponent to cancel)');
     conn.onError = (msg) => {
@@ -276,7 +280,7 @@ export class MenuScene extends Phaser.Scene {
       if (msg !== 'Search cancelled') this.setError(msg);
     };
     conn.onGameStart = () => {
-      void ensureArtTextures(this, this.deck).then(() => {
+      void ensureArtTextures(this, queueDeck).then(() => {
         this.pendingConn = null;
         btn.textContent = '🎯 Find Opponent';
         this.launch(conn);
@@ -354,7 +358,8 @@ export class MenuScene extends Phaser.Scene {
       ...fromChain,
       ...fromTigermint.filter((n) => !seen.has(`${n.collection}#${n.index}`)),
     ];
-    this.nftCards = nfts.map(nftToCard);
+    // Pokemon-mode data rides along from the pack manifest (matched by name).
+    this.nftCards = nfts.map((n) => withGameBlock(nftToCard(n), this.pack));
     this.rebuildDeck();
   }
 
@@ -478,6 +483,18 @@ export class MenuScene extends Phaser.Scene {
     }
   }
 
+  /**
+   * The deck a match actually starts with. Standard presets use this.deck;
+   * pokemon (League) presets need stickers/energy/trainers instead, so a
+   * starter deck is assembled from every available card with a `game` block
+   * (local pack + owned NFTs), falling back to the built-in league demo set.
+   */
+  private gameDeck(): CardDef[] {
+    if (this.rules.gameMode !== 'pokemon') return this.deck;
+    const pool = [...(this.pack?.cards ?? []), ...this.nftCards].filter((d) => d.game);
+    return buildStarterPokemonDeck(pool.length > 0 ? pool : POKEMON_DEMO_CARDS, this.rules.deckSize);
+  }
+
   /** Open the deck builder over everything currently pickable. */
   private async openDeckBuilder(): Promise<void> {
     this.setError('');
@@ -500,9 +517,10 @@ export class MenuScene extends Phaser.Scene {
 
   private async startVsAi(): Promise<void> {
     this.setError('');
-    await ensureArtTextures(this, this.deck);
+    const deck = this.gameDeck();
+    await ensureArtTextures(this, deck);
     // The AI plays a mirror of your deck, so its cards have real artwork too.
-    const conn = new LocalAIConnection(this.deck, this.deck, this.playerName, this.rules);
+    const conn = new LocalAIConnection(deck, deck, this.playerName, this.rules);
     this.launch(conn);
   }
 
@@ -510,10 +528,11 @@ export class MenuScene extends Phaser.Scene {
     this.setError('');
     this.pendingConn?.dispose();
 
+    const deck = this.gameDeck();
     let conn: WsConnection;
     if (mode === 'create') {
       // The room creator's rules preset governs the match.
-      conn = WsConnection.create(CONFIG.serverUrl, this.deck, this.playerName, this.rules);
+      conn = WsConnection.create(CONFIG.serverUrl, deck, this.playerName, this.rules);
       conn.onRoomCode = (code) => this.setBanner(`Room code: ${code} — waiting for an opponent…`);
     } else {
       const code = (document.getElementById('room-code') as HTMLInputElement).value.trim();
@@ -526,7 +545,7 @@ export class MenuScene extends Phaser.Scene {
         this.setBanner(`Watching room ${code.toUpperCase()}…`);
         conn.onNotice = (msg) => this.setBanner(msg);
       } else {
-        conn = WsConnection.join(CONFIG.serverUrl, code, this.deck, this.playerName);
+        conn = WsConnection.join(CONFIG.serverUrl, code, deck, this.playerName);
         this.setBanner(`Joining room ${code.toUpperCase()}…`);
       }
     }
@@ -541,7 +560,7 @@ export class MenuScene extends Phaser.Scene {
       this.setError(msg);
     };
     conn.onGameStart = () => {
-      void ensureArtTextures(this, this.deck).then(() => {
+      void ensureArtTextures(this, deck).then(() => {
         this.pendingConn = null;
         this.launch(conn);
       });

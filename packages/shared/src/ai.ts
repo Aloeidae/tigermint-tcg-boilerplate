@@ -3,12 +3,17 @@ import type { Command } from './commands.js';
 import { effectTargetSpec } from './effects.js';
 import { other } from './helpers.js';
 import { creatureHasFlag } from './skills.js';
+import { choosePokemonCommand } from './pokemon/ai.js';
 
 /**
  * Whose decision the game is waiting on. Almost always the active player —
- * except the block step of blockers-style combat, where the DEFENDER acts.
+ * except the block step of blockers-style combat (the DEFENDER acts), the
+ * pokemon setup phase (both place boards; player 0 first, then 1), and a
+ * pending promotion after a knockout (whoever lost their Active picks).
  */
 export function actingPlayer(state: GameState): PlayerId {
+  if (state.phase === 'setup') return state.setupDone && !state.setupDone[0] ? 0 : 1;
+  if (state.pendingPromote != null) return state.pendingPromote;
   return state.phase === 'block' ? other(state.active) : state.active;
 }
 
@@ -18,6 +23,7 @@ export function actingPlayer(state: GameState): PlayerId {
  * the AI ends its turn. Replace this file to build a smarter opponent.
  */
 export function chooseCommand(state: GameState, me: PlayerId): Command {
+  if (state.rules.gameMode === 'pokemon') return choosePokemonCommand(state, me);
   const p = state.players[me];
   const enemy = state.players[other(me)];
 

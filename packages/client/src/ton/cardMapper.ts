@@ -158,6 +158,19 @@ function skillsFor(nft: NftItem, h: number, type: 'creature' | 'equipment', full
 }
 
 /**
+ * Give an NFT card its pokemon-mode definition by matching it against the
+ * local pack (the generator's pack.json ships a full `game` block per card).
+ * Minted metadata stays lean; the pack manifest is the game-rules source of
+ * truth, matched by card name (a "Card Name" trait survives launchpad
+ * renaming) or id.
+ */
+export function withGameBlock(card: CardDef, pack: { cards: CardDef[] } | null | undefined): CardDef {
+  if (card.game || !pack) return card;
+  const match = pack.cards.find((p) => p.game && (p.id === card.id || p.name === card.name));
+  return match ? { ...card, game: match.game } : card;
+}
+
+/**
  * Build a playable deck: every owned NFT joins once, and the rest of the deck
  * fills from the standard deck (your pack.json, or the demo catalog). That's
  * the recommended shape for a game: players can play day one on the standard

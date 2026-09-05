@@ -21,10 +21,11 @@ spells, and selectable rule sets.
 6. [Minting on TigerMint](#6-minting-on-tigermint)
 7. [In-game pulls](#7-in-game-pulls)
 8. [Skills, statuses, effects, and rules](#8-skills-statuses-effects-and-rules)
-9. [Multiplayer: matchmaking, spectating, reconnects, replays](#9-multiplayer-matchmaking-spectating-reconnects-replays)
-10. [Skinning & sound](#10-skinning--sound)
-11. [Make it yours](#11-make-it-yours)
-12. [Going to production](#12-going-to-production)
+9. [League mode: build a Pokémon-style TCG](#9-league-mode-build-a-pokémon-style-tcg)
+10. [Multiplayer: matchmaking, spectating, reconnects, replays](#10-multiplayer-matchmaking-spectating-reconnects-replays)
+11. [Skinning & sound](#11-skinning--sound)
+12. [Make it yours](#12-make-it-yours)
+13. [Going to production](#13-going-to-production)
 
 ---
 
@@ -71,6 +72,10 @@ real collection.
   ticking status (Poison, Frozen, Shield), or a token summon in one place and
   cards, metadata, the engine, the AI, and the UI all pick it up; rule
   presets (with mulligans) switch whole game feels from a dropdown.
+- **Two complete rules engines** — the mana/creature game, and a
+  Pokémon-TCG-style **League mode** (Active + Bench, energy, evolution,
+  prizes, retreat, weakness/resistance, trainer cards) selectable from the
+  same dropdown — see [section 9](#9-league-mode-build-a-pokémon-style-tcg).
 - **Replays** — the engine is a pure seeded reducer, so a finished game
   downloads as a small JSON file that plays back perfectly.
 - **Sound with zero assets** — procedural WebAudio defaults for every game
@@ -329,7 +334,53 @@ Add an entry to `RULE_PRESETS` and it appears in the menu. Rules travel
 inside the game state, so the engine, AI, server, and targeting UI always
 agree.
 
-## 9. Multiplayer: matchmaking, spectating, reconnects, replays
+## 9. League mode: build a Pokémon-style TCG
+
+The boilerplate ships a **second complete rules engine**. Pick **League
+Quick** or **League Standard** from the Rules dropdown and the game becomes a
+Pokémon-TCG-style battler: one **Active** sticker and a **Bench**, HP with
+damage counters, an **energy** attachment per turn, **evolution** lines,
+**retreat**, face-down **prizes** (take your last one to win), weakness ×2 /
+resistance −20, Special Conditions that tick between turns, and
+Item/Supporter/Stadium/Tool trainer cards. Everything else — PvP, matchmaking,
+spectating, reconnects, replays, pulls, the Mini App — works unchanged.
+
+**How it's built** (`packages/shared/src/pokemon/`):
+
+- `rules.gameMode: 'pokemon'` routes `applyCommand` to the league engine;
+  the standard engine is untouched. Slot 0 of the row is the Active, the
+  rest the Bench.
+- Cards opt in through a **`game` block** on `CardDef` — the whole card
+  definition (stage, HP, type, trait, moves, weakness/resistance, retreat
+  cost) lives there. The legacy `type/cost/attack/health` fields keep the
+  same card playable under the standard engine, so one pack serves both.
+- Move text and trainer cards are **data, not code**: each entry in a card's
+  `effects` array names an op in the effect-DSL interpreter
+  (`pokemon/ops.ts` — `registerOp()` adds your own). Passive ops (armor,
+  noWeakness, swap-cost modifiers, bench immunity…) are queried by the
+  engine where they matter (`pokemon/passives.ts`).
+- Special Conditions (poison/burn/sleep/paralysis/confusion flavors) are
+  entries in the shared **status registry**, so the client renders them with
+  zero extra wiring; rename them for your skin with `configureStatus()`.
+- Coin flips are **seed-deterministic** (`state.rngCursor`), so replays and
+  the PvP server reproduce every flip exactly.
+- `validatePokemonDeck()` enforces deck legality (exact size, ≥1 basic,
+  4-copy cap, unlimited basic energy, ≤4 special energy);
+  `buildStarterPokemonDeck()` assembles a playable starter from any pool.
+
+**Content pipeline:** a league card set is just a `pack.json` whose cards
+carry `game` blocks — drop one into `packages/client/public/pack/` and the
+League presets build starter decks from it (owned NFTs inherit their `game`
+block from the pack by card name, so minted cards stay lean). No pack? A
+built-in demo set (`pokemon/demo.ts`) plays out of the box — it doubles as a
+worked example of every mechanic.
+
+Two deliberate simplifications keep the flow one-command-per-action: deck
+searches and "you may…" choices auto-pick a sensible option
+(deterministically — replays stay exact), and opening setup is a single
+drag (your basic goes Active, other basics auto-bench).
+
+## 10. Multiplayer: matchmaking, spectating, reconnects, replays
 
 - **Find Opponent** queues you server-side; the first two players on
   identical rules become a match. Room codes still work for playing a
@@ -346,7 +397,7 @@ agree.
   ⬇ Replay download; **▶ Watch a replay** on the menu plays any saved file
   back with SPACE to pause.
 
-## 10. Skinning & sound
+## 11. Skinning & sound
 
 The whole look lives in two token files, both built to be swapped wholesale.
 The default follows the TigerMint design system (black, hairline borders,
@@ -373,7 +424,7 @@ bundled files. Drop `public/pack/sounds/<key>.mp3` (`summon`, `attack`,
 `victory`, `pull`, …) to replace any of them; the 🔊 button on the menu
 mutes, remembered per browser.
 
-## 11. Make it yours
+## 12. Make it yours
 
 | I want to… | Edit |
 | --- | --- |
@@ -388,6 +439,10 @@ mutes, remembered per browser.
 | Tune or add rules presets | `shared/src/rules.ts` |
 | Change combat (blockers, lanes…) | `shared/src/combat.ts` |
 | Change turn/phase structure | `shared/src/engine.ts` |
+| League (Pokémon-style) rules engine | `shared/src/pokemon/engine.ts` |
+| League move/trainer effects (the DSL) | `shared/src/pokemon/ops.ts`, `passives.ts` |
+| League Special Conditions | `shared/src/pokemon/conditions.ts` |
+| League demo set & starter decks | `shared/src/pokemon/demo.ts`, `deck.ts` |
 | Rebalance the demo cards | `shared/src/cards.ts` |
 | Smarter (or dumber) AI | `shared/src/ai.ts` |
 | Which cards are free vs mint-only | `rarity` / `basic` in `pack.json` |
@@ -398,7 +453,7 @@ mutes, remembered per browser.
 | The pack preflight (`npm run mint-pack`) | `scripts/mint-pack.mjs` |
 | Card back / banner / backgrounds | `public/pack/`, preload in `BootScene.ts` |
 
-## 12. Going to production
+## 13. Going to production
 
 **Deploying:** CI ships in `.github/workflows/ci.yml` (test, typecheck,
 build on every push). The client is a static build — `netlify.toml` is

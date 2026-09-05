@@ -1,4 +1,4 @@
-import { DECK_SIZE, findEffectKey, findSkillKey, type CardDef, type SkillRef } from '@tcg/shared';
+import { DECK_SIZE, findEffectKey, findSkillKey, type CardDef, type GameBlock, type SkillRef } from '@tcg/shared';
 
 /**
  * Local card pack loader — play your custom cards BEFORE minting them.
@@ -58,6 +58,11 @@ interface PackCardJson {
   /** Print run when minted (TigerMint editions). Ignored for local play. */
   editions?: number;
   copies?: number;
+  /**
+   * Pokemon-mode definition (League presets) — passed through verbatim.
+   * The card-set generator writes these; see shared/src/pokemon/types.ts.
+   */
+  game?: GameBlock;
 }
 
 export interface LocalPack {
@@ -126,6 +131,9 @@ function toCardDef(raw: PackCardJson, index: number): CardDef | null {
     text: raw.text ?? raw.description,
     skills: parseSkills(raw.skills),
   };
+  if (raw.game && typeof raw.game === 'object' && typeof raw.game.kind === 'string') {
+    card.game = raw.game;
+  }
 
   if (type === 'creature') {
     card.attack = clamp(raw.attack ?? 1, 0, 99);
@@ -135,7 +143,9 @@ function toCardDef(raw: PackCardJson, index: number): CardDef | null {
     card.healthBonus = clamp(raw.health ?? 0, 0, 99);
   } else {
     card.effect = parseEffect(raw.effect);
-    if (!card.effect) return null; // a spell with no effect can't be played
+    // A spell with no standard effect can't be played in standard mode, but a
+    // pokemon-only card (energy without a legacy mapping) is still welcome.
+    if (!card.effect && !card.game) return null;
   }
   return card;
 }

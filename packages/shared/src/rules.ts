@@ -45,6 +45,27 @@ export interface RulesConfig {
    *   unblocked ones hit the face. Attackers never choose creature targets.
    */
   combatStyle: 'targeted' | 'blockers';
+  /**
+   * Which engine runs the game.
+   * 'standard': the mana/creature engine above (all knobs apply).
+   * 'pokemon': Pokémon-TCG-style rules (pokemon/engine.ts) — Active + Bench,
+   *   energy attachment, prizes, evolution, retreat, weakness/resistance.
+   *   Cards need a `game` block; mana, combatStyle, and the standard combat
+   *   knobs are ignored. Slot 0 of the row is the Active, the rest the Bench.
+   */
+  gameMode: 'standard' | 'pokemon';
+  /** Pokemon mode: prize cards per player (take the last one to win). */
+  prizes: number;
+  /** Pokemon mode: prizes awarded for knocking out a star sticker. */
+  starPrizes: number;
+  /** Pokemon mode: the first player cannot attack on turn 1. */
+  firstTurnNoAttack: boolean;
+  /** Pokemon mode: the first player cannot play a Supporter on turn 1. */
+  firstTurnNoSupporter: boolean;
+  /** Pokemon mode: weakness multiplies move damage (×2). */
+  weaknessMultiplier: number;
+  /** Pokemon mode: resistance subtracts from move damage (−20). */
+  resistanceAmount: number;
 }
 
 export const DEFAULT_RULES: RulesConfig = {
@@ -62,6 +83,39 @@ export const DEFAULT_RULES: RulesConfig = {
   fatigue: 'lose',
   mulligan: false,
   combatStyle: 'targeted',
+  gameMode: 'standard',
+  prizes: 6,
+  starPrizes: 2,
+  firstTurnNoAttack: true,
+  firstTurnNoSupporter: true,
+  weaknessMultiplier: 2,
+  resistanceAmount: 20,
+};
+
+/**
+ * Pokemon-mode baselines. `maxRow` is 1 Active + the Bench; the row array
+ * gets one slot of headroom so a benchSize +1 Stadium (Megagroup) fits.
+ */
+export const POKEMON_STANDARD: RulesConfig = {
+  ...DEFAULT_RULES,
+  gameMode: 'pokemon',
+  deckSize: 60,
+  openingHand: 7,
+  maxHand: 99,
+  maxRow: 6, // Active + Bench 5
+  prizes: 6,
+  firstPlayerDraws: true,
+  fatigue: 'lose',
+};
+
+export const POKEMON_QUICK: RulesConfig = {
+  ...POKEMON_STANDARD,
+  deckSize: 30,
+  openingHand: 5,
+  maxRow: 4, // Active + Bench 3
+  prizes: 3,
+  firstPlayerDraws: false,
+  firstTurnNoSupporter: false,
 };
 
 /**
@@ -88,6 +142,18 @@ export const RULE_PRESETS: Record<string, { label: string; description: string; 
     label: 'Attrition',
     description: 'The long game: 40 life, fatigue deals growing damage, defenders always strike back, free mulligan.',
     rules: { ...DEFAULT_RULES, startingLife: 40, fatigue: 'damage', mulligan: true },
+  },
+  league: {
+    label: 'League Quick',
+    description:
+      'Pokémon-TCG-style: Active & Bench, energy attachment, evolution, retreat, 3 prizes. 30-card decks, Bench of 3.',
+    rules: { ...POKEMON_QUICK },
+  },
+  leagueStandard: {
+    label: 'League Standard',
+    description:
+      'The full league ruleset: 60-card decks, 7-card hands, Bench of 5, 6 prizes, first player cannot attack or play a Supporter on turn 1.',
+    rules: { ...POKEMON_STANDARD },
   },
 };
 
@@ -118,5 +184,12 @@ export function mergeRules(partial?: Partial<RulesConfig> | null): RulesConfig {
   r.mulligan = bool(partial.mulligan, r.mulligan);
   r.combatStyle =
     partial.combatStyle === 'blockers' ? 'blockers' : partial.combatStyle === 'targeted' ? 'targeted' : r.combatStyle;
+  r.gameMode = partial.gameMode === 'pokemon' ? 'pokemon' : partial.gameMode === 'standard' ? 'standard' : r.gameMode;
+  r.prizes = num(partial.prizes, 1, 10, r.prizes);
+  r.starPrizes = num(partial.starPrizes, 1, 3, r.starPrizes);
+  r.firstTurnNoAttack = bool(partial.firstTurnNoAttack, r.firstTurnNoAttack);
+  r.firstTurnNoSupporter = bool(partial.firstTurnNoSupporter, r.firstTurnNoSupporter);
+  r.weaknessMultiplier = num(partial.weaknessMultiplier, 1, 4, r.weaknessMultiplier);
+  r.resistanceAmount = num(partial.resistanceAmount, 0, 100, r.resistanceAmount);
   return r;
 }

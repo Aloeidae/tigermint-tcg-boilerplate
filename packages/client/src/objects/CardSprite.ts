@@ -91,18 +91,31 @@ export class CardSprite extends Phaser.GameObjects.Container {
       this.add(gTop);
       gTop.lineStyle(3, T.frame, 1);
       gTop.strokeRoundedRect(-w / 2, -h / 2, w, h, 10);
-      const cost = badgeSpot(w, h, 'fullArt', 'cost');
-      this.badge(scene, gTop, cost.x, cost.y, cost.size, T.costGem, String(def.cost));
-      if (def.type === 'creature') {
-        const atk = opts.creature?.attack ?? def.attack ?? 0;
-        const hp = opts.creature?.health ?? def.health ?? 1;
-        const maxHp = opts.creature?.maxHealth ?? def.health ?? 1;
-        const atkColor = atk > (def.attack ?? 0) ? T.buffedText : T.gemText;
-        const hpColor = hp < maxHp ? T.damagedText : T.gemText;
-        const atkSpot = badgeSpot(w, h, 'fullArt', 'attack');
+      const sticker = def.game?.kind === 'sticker' ? def.game : null;
+      if (sticker) {
+        // Pokemon-mode sticker: no mana cost — type emoji top-left, HP
+        // top-right, energy pips along the bottom.
+        const costSpot = badgeSpot(w, h, 'fullArt', 'cost');
+        this.typeEmoji(scene, costSpot, sticker.typeEmoji ?? TYPE_EMOJI[sticker.type] ?? '👀');
+        const hp = opts.creature?.health ?? sticker.hp;
+        const maxHp = opts.creature?.maxHealth ?? sticker.hp;
         const hpSpot = badgeSpot(w, h, 'fullArt', 'health');
-        this.badge(scene, gTop, atkSpot.x, atkSpot.y, atkSpot.size, T.attackGem, String(atk), atkColor);
-        this.badge(scene, gTop, hpSpot.x, hpSpot.y, hpSpot.size, T.healthGem, String(hp), hpColor);
+        this.badge(scene, gTop, hpSpot.x, hpSpot.y, hpSpot.size, T.healthGem, String(hp), hp < maxHp ? T.damagedText : T.gemText);
+        if (opts.creature) this.energyStrip(scene, opts.creature, w, h);
+      } else if (!def.game) {
+        const cost = badgeSpot(w, h, 'fullArt', 'cost');
+        this.badge(scene, gTop, cost.x, cost.y, cost.size, T.costGem, String(def.cost));
+        if (def.type === 'creature') {
+          const atk = opts.creature?.attack ?? def.attack ?? 0;
+          const hp = opts.creature?.health ?? def.health ?? 1;
+          const maxHp = opts.creature?.maxHealth ?? def.health ?? 1;
+          const atkColor = atk > (def.attack ?? 0) ? T.buffedText : T.gemText;
+          const hpColor = hp < maxHp ? T.damagedText : T.gemText;
+          const atkSpot = badgeSpot(w, h, 'fullArt', 'attack');
+          const hpSpot = badgeSpot(w, h, 'fullArt', 'health');
+          this.badge(scene, gTop, atkSpot.x, atkSpot.y, atkSpot.size, T.attackGem, String(atk), atkColor);
+          this.badge(scene, gTop, hpSpot.x, hpSpot.y, hpSpot.size, T.healthGem, String(hp), hpColor);
+        }
       }
       if (opts.creature && opts.creature.equipment.length > 0) {
         const eq = badgeSpot(w, h, 'fullArt', 'equip');
@@ -165,9 +178,11 @@ export class CardSprite extends Phaser.GameObjects.Container {
     this.add(name);
 
     // Skill line (icons + names). Board creatures show effective skills,
-    // including ones granted by attached equipment.
+    // including ones granted by attached equipment. Pokemon-mode stickers
+    // show their trait here instead; their moves fill the body text below.
+    const sticker = def.game?.kind === 'sticker' ? def.game : null;
     const skillRefs = opts.creature ? creatureSkills(opts.creature) : def.skills;
-    const skills = skillLine(skillRefs);
+    const skills = sticker ? (sticker.trait ? `✨ ${sticker.trait.name}` : '') : skillLine(skillRefs);
     let bodyY = bannerY + bannerH + h * 0.13;
     if (skills) {
       const skillsText = scene.add
@@ -184,10 +199,19 @@ export class CardSprite extends Phaser.GameObjects.Container {
       bodyY = bannerY + bannerH + h * 0.17;
     }
 
-    // Rules text.
-    const rules = def.text ?? effectText(def.effect) ?? '';
-    const bodyText =
-      def.type === 'equipment' ? `+${def.attackBonus ?? 0}/+${def.healthBonus ?? 0}` : rules;
+    // Rules text. Stickers list their moves (cost pips · name · damage);
+    // other pokemon-mode cards print their game text.
+    let bodyText: string;
+    if (sticker) {
+      bodyText = sticker.moves
+        .map((m) => `${costLine(m.cost)} ${m.name}${m.damage || m.damageText ? ` · ${m.damageText || m.damage}` : ''}`)
+        .join('\n');
+    } else if (def.game && 'text' in def.game && def.game.text) {
+      bodyText = def.game.text;
+    } else {
+      const rules = def.text ?? effectText(def.effect) ?? '';
+      bodyText = def.type === 'equipment' ? `+${def.attackBonus ?? 0}/+${def.healthBonus ?? 0}` : rules;
+    }
     if (bodyText) {
       const body = scene.add
         .text(0, bodyY, bodyText, {
@@ -202,20 +226,42 @@ export class CardSprite extends Phaser.GameObjects.Container {
     }
 
     // Live badges, placed per THEME.card.badges.framed.
-    const cost = badgeSpot(w, h, 'framed', 'cost');
-    this.badge(scene, g, cost.x, cost.y, cost.size, T.costGem, String(def.cost));
-
-    if (def.type === 'creature') {
-      const atk = opts.creature?.attack ?? def.attack ?? 0;
-      const hp = opts.creature?.health ?? def.health ?? 1;
-      const maxHp = opts.creature?.maxHealth ?? def.health ?? 1;
-      const baseAtk = def.attack ?? 0;
-      const atkColor = atk > baseAtk ? T.buffedText : T.gemText;
-      const hpColor = hp < maxHp ? T.damagedText : T.gemText;
-      const atkSpot = badgeSpot(w, h, 'framed', 'attack');
+    if (sticker) {
+      // Pokemon-mode: type emoji instead of a mana cost, HP top-right,
+      // retreat cost tucked into the bottom-right corner.
+      const costSpot = badgeSpot(w, h, 'framed', 'cost');
+      this.typeEmoji(scene, costSpot, sticker.typeEmoji ?? TYPE_EMOJI[sticker.type] ?? '👀');
+      const hp = opts.creature?.health ?? sticker.hp;
+      const maxHp = opts.creature?.maxHealth ?? sticker.hp;
       const hpSpot = badgeSpot(w, h, 'framed', 'health');
-      this.badge(scene, g, atkSpot.x, atkSpot.y, atkSpot.size, T.attackGem, String(atk), atkColor);
-      this.badge(scene, g, hpSpot.x, hpSpot.y, hpSpot.size, T.healthGem, String(hp), hpColor);
+      this.badge(scene, g, hpSpot.x, hpSpot.y, hpSpot.size, T.healthGem, String(hp), hp < maxHp ? T.damagedText : T.gemText);
+      if (sticker.swapCost > 0) {
+        const swap = scene.add
+          .text(w / 2 - w * 0.06, h / 2 - h * 0.045, `↩${sticker.swapCost}`, {
+            fontFamily: THEME.fonts.body, fontSize: `${Math.round(h * 0.05)}px`,
+            color: T.skillText, fontStyle: 'bold',
+          })
+          .setOrigin(1, 0.5);
+        this.add(swap);
+      }
+    } else if (def.game?.kind === 'reaction') {
+      const costSpot = badgeSpot(w, h, 'framed', 'cost');
+      this.typeEmoji(scene, costSpot, def.game.typeEmoji ?? TYPE_EMOJI[def.game.type] ?? '👀');
+    } else {
+      const cost = badgeSpot(w, h, 'framed', 'cost');
+      this.badge(scene, g, cost.x, cost.y, cost.size, T.costGem, String(def.cost));
+      if (def.type === 'creature') {
+        const atk = opts.creature?.attack ?? def.attack ?? 0;
+        const hp = opts.creature?.health ?? def.health ?? 1;
+        const maxHp = opts.creature?.maxHealth ?? def.health ?? 1;
+        const baseAtk = def.attack ?? 0;
+        const atkColor = atk > baseAtk ? T.buffedText : T.gemText;
+        const hpColor = hp < maxHp ? T.damagedText : T.gemText;
+        const atkSpot = badgeSpot(w, h, 'framed', 'attack');
+        const hpSpot = badgeSpot(w, h, 'framed', 'health');
+        this.badge(scene, g, atkSpot.x, atkSpot.y, atkSpot.size, T.attackGem, String(atk), atkColor);
+        this.badge(scene, g, hpSpot.x, hpSpot.y, hpSpot.size, T.healthGem, String(hp), hpColor);
+      }
     }
 
     // Equipment chips on a board creature.
@@ -225,6 +271,7 @@ export class CardSprite extends Phaser.GameObjects.Container {
     }
 
     if (opts.creature) this.statusStrip(scene, opts.creature, w, h);
+    if (opts.creature && sticker) this.energyStrip(scene, opts.creature, w, h);
 
     if (opts.dim) {
       const shade = scene.add.rectangle(0, 0, w, h, 0x000000, 0.35);
@@ -240,6 +287,44 @@ export class CardSprite extends Phaser.GameObjects.Container {
     if (dim) return;
     const spec = THEME.card.foil[(this.def.rarity ?? '').toUpperCase()];
     if (spec && this.postFX) this.postFX.addShine(spec.speed, spec.lineWidth, spec.gradient);
+  }
+
+  /** A bare emoji where a badge would sit (pokemon-mode type marker). */
+  private typeEmoji(scene: Phaser.Scene, spot: { x: number; y: number; size: number }, emoji: string): void {
+    const t = scene.add
+      .text(spot.x + spot.size / 2, spot.y + spot.size / 2, emoji, {
+        fontFamily: THEME.fonts.body,
+        fontSize: `${Math.round(spot.size * 0.9)}px`,
+      })
+      .setOrigin(0.5);
+    this.add(t);
+  }
+
+  /** Attached energy pips + Tool marker along a board sticker's bottom edge. */
+  private energyStrip(scene: Phaser.Scene, creature: CreatureOnBoard, w: number, h: number): void {
+    const pips = (creature.reactions ?? [])
+      .map((r) => {
+        const g = r.def.game;
+        return g?.kind === 'reaction' ? g.typeEmoji ?? TYPE_EMOJI[g.type] ?? '👀' : '👀';
+      })
+      .join('');
+    const gift = creature.gift ? '🎁' : '';
+    if (!pips && !gift) return;
+    const y = h / 2 - h * 0.045;
+    const t = scene.add
+      .text(-w / 2 + w * 0.06, y, `${pips}${gift}`, {
+        fontFamily: THEME.fonts.body,
+        fontSize: `${Math.round(w * 0.11)}px`,
+      })
+      .setOrigin(0, 0.5);
+    // Keep the strip inside the card even with lots of energy attached.
+    const maxW = w * 0.8;
+    if (t.width > maxW) t.setScale(maxW / t.width);
+    const bg = scene.add.graphics();
+    bg.fillStyle(THEME.card.statusChip, 0.75);
+    bg.fillRoundedRect(-w / 2 + w * 0.03, y - t.height / 2 - 2, Math.min(t.width, maxW) + w * 0.06, t.height + 4, 5);
+    this.add(bg);
+    this.add(t);
   }
 
   /** Active statuses on a board creature: a compact icon pill at top-center. */
@@ -344,6 +429,17 @@ function coverCrop(scene: Phaser.Scene, img: Phaser.GameObjects.Image, key: stri
 
 function fitName(name: string): string {
   return name.length > 16 ? `${name.slice(0, 15)}…` : name;
+}
+
+/** Fallback emoji per pokemon-mode energy type (cards may carry their own). */
+export const TYPE_EMOJI: Record<string, string> = {
+  Blaze: '🔥', Chill: '🥶', Zap: '⚡', Solid: '👍', Mind: '🤯',
+  Gross: '💩', Heart: '❤️', Chaos: '😂', Neutral: '👀', Any: '✳️',
+};
+
+/** A move's energy cost as emoji pips, e.g. "🔥🔥👀". */
+export function costLine(cost: string[]): string {
+  return cost.map((c) => TYPE_EMOJI[c] ?? '👀').join('');
 }
 
 function placeholderColor(id: string): number {

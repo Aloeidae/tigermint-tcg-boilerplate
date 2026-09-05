@@ -306,3 +306,52 @@ basic deck, RARE+ = mint-only unless flagged `basic`:
 | Snack Time | 2 | spell | — | draw 2 | COMMON |
 | Battle Squeak | 1 | spell | — | buffAttack 2 | COMMON |
 | Skunk Bomb | 4 | spell | — | aoeDamage 2 | EPIC |
+
+## 15. League mode (Pokémon-style rules)
+
+`rules.gameMode: 'pokemon'` — the League Quick / League Standard presets.
+A second complete ruleset in `shared/src/pokemon/`; cards need a `game`
+block (see `pokemon/types.ts`).
+
+**Board & turn.** One Active (row slot 0) + a Bench (Quick: 3, Standard: 5).
+A turn: draw → main (bench basics, evolve, attach ONE energy from hand, any
+items, one Supporter, one Stadium, Tools, once-per-turn traits, one retreat)
+→ attack with the Active's move, which ends the turn (or pass). The first
+player cannot attack on turn 1 (Standard also bans turn-1 Supporters).
+
+**Winning.** Each player sets aside face-down prizes (Quick 3, Standard 6);
+knock out an enemy sticker to take one (star stickers give 2). Take your
+last prize, or leave the opponent with nothing to promote, or deck them out.
+
+**Damage math** (order): move base damage → attacker-side bonuses (Boosted,
+Premium-Boost-style attachments, bonusPerBench / bonusPerPrizeTaken /
+bonusVs) → weakness ×2 (unless noWeakness) → resistance −20 → flat armor →
+protection statuses. Bench damage, condition ticks, and self damage are
+"placed" — they skip ALL of that.
+
+**Special Conditions** (Active only; retreat/evolve clears them; tick
+between turns): Spammed = poison 10; Flamed = 20 + flip to recover; Muted =
+no attack/retreat, flip to wake; Lagging = no attack/retreat, clears at the
+end of its own turn; Glitched = flip before attacking, tails = fail + 30 to
+itself. Muted/Lagging/Glitched replace one another. Rename any of them with
+`configureStatus()`.
+
+**Evolution.** Stage 1/2 plays on top of its `upgradesFrom` card: damage,
+energy, and Tools carry over; conditions clear; not on the turn it entered
+play and not on either player's first turn.
+
+**Retreat.** Once per turn, pay the Active's swap cost by discarding that
+much attached energy (modifiers: Free-Swap-style traits, swapCostDelta
+Tools/Stadiums, enemy opponentSwapCost taxes).
+
+**Deck legality** (`validatePokemonDeck`): exact deck size, ≥1 basic
+sticker, max 4 copies by name, basic energy unlimited, ≤4 special energy.
+
+**Balance rules of thumb** (the demo set and the reference generator both
+sit on these curves): basics 60–90 HP, stage 1s 90–120, stage 2s 170–190,
+stars 110–130; damage ≈ 10–30 per energy at basic stage, scaling up one
+band per stage; price move text in damage (inflicting a condition ≈ −10 to
+−20, a coin-flip upside ≈ free at expected value, self-damage buys +20,
+healing 30 or drawing a card ≈ −20). Sanity checks: no basic should
+one-shot a same-tier basic through weakness with a 1-energy move, and every
+stage 2 should die in ≤3 hits to the stage 1 it's weak to.

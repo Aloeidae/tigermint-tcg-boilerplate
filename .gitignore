@@ -7,3 +7,6 @@ dist/
 # your local card pack stays yours — only the example manifest is tracked
 packages/client/public/pack/*
 !packages/client/public/pack/pack.example.json
+
+# local game-design reference drops (e.g. a generated card set + its ruleset)
+pokemonref/

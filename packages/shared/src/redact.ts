@@ -22,6 +22,10 @@ export function redactForSpectator(state: GameState): PlayerView {
 export function redactFor(state: GameState, player: PlayerId): PlayerView {
   const me = state.players[player];
   const opp = state.players[other(player)];
+  // Pokemon setup: the opponent's opening placement stays face-down until
+  // both players are ready — send them an empty row.
+  const setupPhase = state.phase === 'setup';
+  const oppRow = setupPhase ? opp.row.map(() => null) : structuredClone(opp.row);
   return {
     myId: player,
     turn: state.turn,
@@ -32,6 +36,8 @@ export function redactFor(state: GameState, player: PlayerId): PlayerView {
     rules: state.rules,
     attackers: [...state.attackers],
     blocks: state.blocks.map((b) => ({ ...b })),
+    channel: state.channel ? structuredClone(state.channel) : state.channel,
+    pendingPromote: state.pendingPromote,
     you: {
       id: me.id,
       name: me.name,
@@ -43,6 +49,11 @@ export function redactFor(state: GameState, player: PlayerId): PlayerView {
       row: structuredClone(me.row),
       graveyardCount: me.graveyard.length,
       mulliganUsed: me.mulliganUsed,
+      // Prize CONTENTS stay hidden from everyone, including their owner.
+      prizeCount: me.prizes?.length,
+      prizesTaken: me.prizesTaken,
+      turnFlags: me.turnFlags ? structuredClone(me.turnFlags) : undefined,
+      ready: state.setupDone ? state.setupDone[me.id] : undefined,
     },
     opponent: {
       id: opp.id,
@@ -52,8 +63,11 @@ export function redactFor(state: GameState, player: PlayerId): PlayerView {
       maxMana: opp.maxMana,
       handCount: opp.hand.length,
       deckCount: opp.deck.length,
-      row: structuredClone(opp.row),
+      row: oppRow,
       graveyardCount: opp.graveyard.length,
+      prizeCount: opp.prizes?.length,
+      prizesTaken: opp.prizesTaken,
+      ready: state.setupDone ? state.setupDone[opp.id] : undefined,
     },
   };
 }

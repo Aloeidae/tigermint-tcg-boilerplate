@@ -27,7 +27,20 @@ export type GameEvent =
   | { type: 'lifeChanged'; player: PlayerId; life: number; delta: number }
   | { type: 'mulligan'; player: PlayerId; count: number }
   | { type: 'fatigue'; player: PlayerId }
-  | { type: 'gameOver'; winner: PlayerId; reason: string };
+  | { type: 'gameOver'; winner: PlayerId; reason: string }
+  // ---- Pokemon game mode ----
+  | { type: 'coinFlip'; player: PlayerId; heads: boolean; label?: string }
+  | { type: 'energyAttached'; player: PlayerId; targetInstanceId: string; cardName: string; targetName: string }
+  | { type: 'energyDiscarded'; player: PlayerId; instanceId: string; count: number }
+  | { type: 'upgraded'; player: PlayerId; instanceId: string; cardName: string; fromName: string }
+  | { type: 'moveUsed'; player: PlayerId; instanceId: string; cardName: string; move: string }
+  | { type: 'moveFailed'; player: PlayerId; instanceId: string; cardName: string; reason: string }
+  | { type: 'swapped'; player: PlayerId; instanceId: string; cardName: string }
+  | { type: 'promoted'; player: PlayerId; instanceId: string; cardName: string }
+  | { type: 'prizeTaken'; player: PlayerId; count: number; remaining: number }
+  | { type: 'channelPlayed'; player: PlayerId; cardName: string }
+  | { type: 'handRevealed'; player: PlayerId; cardNames: string[] }
+  | { type: 'playerReady'; player: PlayerId };
 
 /**
  * Strip information a given player shouldn't learn from the event stream

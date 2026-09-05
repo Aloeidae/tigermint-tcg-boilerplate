@@ -1,7 +1,15 @@
 import Phaser from 'phaser';
 import {
+  coversCost,
   creatureHasFlag,
   effectTargetSpec,
+  isBasicSticker,
+  passiveOps,
+  reactionGame,
+  statusBlocksAttack,
+  statusBlocksSwap,
+  stickerGame,
+  trainerGame,
   type CardDef,
   type CardInstance,
   type Command,
@@ -9,10 +17,12 @@ import {
   type EffectTarget,
   type GameEvent,
   type PlayerView,
+  type PokemonMove,
+  type ReactionType,
   type TargetSpec,
 } from '@tcg/shared';
 import type { Connection } from '../net/Connection.js';
-import { CardSprite } from '../objects/CardSprite.js';
+import { CardSprite, costLine } from '../objects/CardSprite.js';
 import { RowLayout } from '../objects/RowLayout.js';
 import { HandLayout } from '../objects/HandLayout.js';
 import { Hud } from '../objects/Hud.js';
@@ -74,6 +84,15 @@ export class GameScene extends Phaser.Scene {
   /** Two-tap concede confirmation. */
   private concedeArmed = false;
   private concedeTimer: ReturnType<typeof setTimeout> | null = null;
+  /** Pokemon mode: picking a Bench sticker to retreat into. */
+  private retreatPicking = false;
+  /** Pokemon mode: the sticker action menu (moves / retreat / trait). */
+  private stickerMenu: Phaser.GameObjects.GameObject[] = [];
+
+  /** Pokemon-TCG-style rules (League presets)? Changes every interaction. */
+  private get pokemon(): boolean {
+    return this.view.rules.gameMode === 'pokemon';
+  }
 
   constructor() {
     super('Game');
@@ -94,8 +113,24 @@ export class GameScene extends Phaser.Scene {
     this.input.dragDistanceThreshold = 8;
 
     // Creation order fixes the z-order: rows < log < hud < hand < arrow.
-    this.oppRow = new RowLayout(this, W / 2, OPP_ROW_Y, this.view.rules.maxRow, ROW_CARD.w, ROW_CARD.h, ROW_CARD.spacing, ROW_CARD.cols, ROW_CARD.rowGap);
-    this.myRow = new RowLayout(this, W / 2, MY_ROW_Y, this.view.rules.maxRow, ROW_CARD.w, ROW_CARD.h, ROW_CARD.spacing, ROW_CARD.cols, ROW_CARD.rowGap);
+    // (Pokemon rows carry a Bench-headroom slot, so size from the view.)
+    const slots = Math.max(this.view.you.row.length, this.view.rules.maxRow);
+    this.oppRow = new RowLayout(this, W / 2, OPP_ROW_Y, slots, ROW_CARD.w, ROW_CARD.h, ROW_CARD.spacing, ROW_CARD.cols, ROW_CARD.rowGap);
+    this.myRow = new RowLayout(this, W / 2, MY_ROW_Y, slots, ROW_CARD.w, ROW_CARD.h, ROW_CARD.spacing, ROW_CARD.cols, ROW_CARD.rowGap);
+    // Pokemon mode: slot 0 is the Active spot — flag it (landscape only; the
+    // portrait grid is too tight for labels, position + glow carry it there).
+    if (this.view.rules.gameMode === 'pokemon' && !PORTRAIT) {
+      const label = (row: RowLayout, dy: number): void => {
+        this.add
+          .text(row.slotX(0), row.slotY(0) + dy, '⭐ ACTIVE', {
+            fontFamily: THEME.fonts.body, fontSize: '15px', color: THEME.hud.bannerIdle,
+          })
+          .setOrigin(0.5)
+          .setAlpha(0.8);
+      };
+      label(this.oppRow, -(ROW_CARD.h / 2 + 16));
+      label(this.myRow, ROW_CARD.h / 2 + 16);
+    }
     this.oppHand = this.add.container(0, 0);
     this.logText = this.add.text(LOG.x, LOG.y, '', {
       fontFamily: THEME.fonts.mono, fontSize: `${LOG.fontSize}px`, color: THEME.hud.log,
@@ -211,16 +246,35 @@ export class GameScene extends Phaser.Scene {
 
     if (this.selectedAttacker && !this.findMyCreature(this.selectedAttacker)) this.deselect();
 
+    const pokemon = this.pokemon;
+    const settingUp = pokemon && view.phase === 'setup' && !view.you.ready && !view.spectator;
+    const promoting = pokemon && view.pendingPromote === view.myId && !view.spectator && !view.gameOver;
+
     // Attackers that may still act glow; spent ones dim.
     const glowIds = new Set<string>();
     const dimIds = new Set<string>();
-    for (const c of view.you.row) {
-      if (!c) continue;
-      const canAct = c.ready && c.attacksUsed < view.rules.attacksPerTurn && c.attack > 0;
-      if (myTurn && combat && canAct) glowIds.add(c.instanceId);
-      if (myTurn && combat && !canAct) dimIds.add(c.instanceId);
-      // Defending: every creature can block.
-      if (amDefending) glowIds.add(c.instanceId);
+    if (pokemon) {
+      // Promotion / retreat: the Bench choices glow. Otherwise: the Active
+      // glows on my turn when at least one move is affordable.
+      if (promoting || this.retreatPicking) {
+        for (const c of view.you.row.slice(1)) {
+          if (c) glowIds.add(c.instanceId);
+        }
+      } else if (myTurn && view.phase === 'main1' && view.pendingPromote == null) {
+        const active = view.you.row[0];
+        if (active && this.affordableMoves(active).length > 0 && !statusBlocksAttack(active)) {
+          glowIds.add(active.instanceId);
+        }
+      }
+    } else {
+      for (const c of view.you.row) {
+        if (!c) continue;
+        const canAct = c.ready && c.attacksUsed < view.rules.attacksPerTurn && c.attack > 0;
+        if (myTurn && combat && canAct) glowIds.add(c.instanceId);
+        if (myTurn && combat && !canAct) dimIds.add(c.instanceId);
+        // Defending: every creature can block.
+        if (amDefending) glowIds.add(c.instanceId);
+      }
     }
 
     this.oppRow.render(view.opponent.row, {
@@ -230,7 +284,8 @@ export class GameScene extends Phaser.Scene {
       glowIds,
       dimIds,
       // Blockers mode declares by tapping; only targeted mode drags attacks.
-      draggableIds: blockers ? new Set() : glowIds,
+      // Pokemon mode is all taps too — the Active opens its action menu.
+      draggableIds: blockers || pokemon ? new Set() : glowIds,
       onCreatureClick: (id) => this.onMyCreatureClick(id),
       onCreatureDragStart: (id, sprite) => {
         this.selectedAttacker = id;
@@ -240,7 +295,7 @@ export class GameScene extends Phaser.Scene {
       onCreatureDrop: (id, pointer) => this.onAttackDrop(id, pointer),
     });
     this.hand.render(view.you.hand, {
-      playableIds: myTurn && mainPhase ? this.computePlayable() : new Set(),
+      playableIds: (myTurn && mainPhase && view.pendingPromote == null) || settingUp ? this.computePlayable() : new Set(),
       deckOrigin: MY_DECK_POS,
       onDrop: (card, pointer) => this.onHandDrop(card, pointer),
       onDragStart: (card) => {
@@ -295,6 +350,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   private computePlayable(): Set<string> {
+    if (this.pokemon) return this.computePokemonPlayable();
     const view = this.view;
     const ids = new Set<string>();
     const myCreatures = view.you.row.some((c) => c !== null);
@@ -314,6 +370,237 @@ export class GameScene extends Phaser.Scene {
       ids.add(card.instanceId);
     }
     return ids;
+  }
+
+  // ------------------------------------------------------------ pokemon mode
+
+  /** Hand cards worth lighting up under League rules (engine re-validates). */
+  private computePokemonPlayable(): Set<string> {
+    const view = this.view;
+    const ids = new Set<string>();
+    if (view.phase === 'setup') {
+      for (const c of view.you.hand) {
+        if (isBasicSticker(c.def)) ids.add(c.instanceId);
+      }
+      return ids;
+    }
+    const flags = view.you.turnFlags;
+    const benchRoom = view.you.row.slice(1).some((s) => s === null);
+    const anyBoard = view.you.row.some((c) => c !== null);
+    for (const card of view.you.hand) {
+      const def = card.def;
+      const sticker = stickerGame(def);
+      if (sticker) {
+        if (sticker.stageIndex === 0) {
+          if (benchRoom || view.you.row[0] === null) ids.add(card.instanceId);
+        } else if (
+          view.turn > 2 &&
+          view.you.row.some(
+            (c) => c && (sticker.upgradesFrom === c.def.id || sticker.upgradesFrom === c.def.name) && (c.enteredTurn ?? 0) < view.turn
+          )
+        ) {
+          ids.add(card.instanceId);
+        }
+        continue;
+      }
+      if (reactionGame(def)) {
+        if (!flags?.energy && anyBoard) ids.add(card.instanceId);
+        continue;
+      }
+      const trainer = trainerGame(def);
+      if (!trainer) continue;
+      if (trainer.kind === 'gift') {
+        if (view.you.row.some((c) => c && !c.gift)) ids.add(card.instanceId);
+      } else if (trainer.kind === 'admin') {
+        if (!flags?.supporter && !(view.rules.firstTurnNoSupporter && view.turn === 1)) ids.add(card.instanceId);
+      } else if (trainer.kind === 'channel') {
+        if (!flags?.stadium && view.channel?.card.def.name !== def.name) ids.add(card.instanceId);
+      } else if (!flags?.locked.includes('bot')) {
+        ids.add(card.instanceId);
+      }
+    }
+    return ids;
+  }
+
+  /** The Active's moves whose energy cost is currently covered. */
+  private affordableMoves(creature: CreatureOnBoard): { move: PokemonMove; index: number }[] {
+    const game = stickerGame(creature.def);
+    if (!game) return [];
+    if (this.view.rules.firstTurnNoAttack && this.view.turn === 1) return [];
+    const attached = (creature.reactions ?? []).map(
+      (r) => reactionGame(r.def) ?? { type: 'Neutral' as ReactionType }
+    );
+    return game.moves
+      .map((move, index) => ({ move, index }))
+      .filter(({ move }) => coversCost(attached, move.cost, game.type));
+  }
+
+  /** Drops under League rules: bench, evolve, attach, trainers, setup. */
+  private resolvePokemonDrop(card: CardInstance, x: number, y: number): Command | null {
+    const view = this.view;
+    const me = view.myId;
+    const def = card.def;
+
+    // Setup: the dropped basic becomes the Active, other basics auto-bench.
+    if (view.phase === 'setup') {
+      if (view.you.ready || !isBasicSticker(def)) return null;
+      const benchIds = view.you.hand
+        .filter((c) => c.instanceId !== card.instanceId && isBasicSticker(c.def))
+        .map((c) => c.instanceId);
+      return { type: 'setup', player: me, pinnedId: card.instanceId, benchIds };
+    }
+
+    const sticker = stickerGame(def);
+    if (sticker) {
+      if (sticker.stageIndex === 0) {
+        const slot = this.myRow.slotAt(x, y);
+        const chosen = slot !== null && view.you.row[slot] === null ? slot : undefined;
+        return { type: 'playSticker', player: me, instanceId: card.instanceId, slot: chosen };
+      }
+      const target = this.myRow.creatureAt(x, y, view.you.row);
+      if (!target) {
+        this.toast(`Drop ${def.name} on the sticker it evolves from`);
+        return null;
+      }
+      return { type: 'upgrade', player: me, instanceId: card.instanceId, targetInstanceId: target };
+    }
+
+    if (reactionGame(def)) {
+      const target = this.myRow.creatureAt(x, y, view.you.row);
+      if (!target) {
+        this.toast('Drop energy on one of your stickers');
+        return null;
+      }
+      return { type: 'attachReaction', player: me, instanceId: card.instanceId, targetInstanceId: target };
+    }
+
+    const trainer = trainerGame(def);
+    if (!trainer) return null;
+    if (trainer.kind === 'gift') {
+      const target = this.myRow.creatureAt(x, y, view.you.row);
+      if (!target) {
+        this.toast('Drop the Tool on one of your stickers');
+        return null;
+      }
+      return { type: 'attachGift', player: me, instanceId: card.instanceId, targetInstanceId: target };
+    }
+    // Item/Supporter/Stadium: a sticker under the drop point becomes the
+    // choice for target-taking effects (gust picks, heals, Tool removal).
+    const picked = this.myRow.creatureAt(x, y, view.you.row) ?? this.oppRow.creatureAt(x, y, view.opponent.row);
+    return {
+      type: 'playTrainer', player: me, instanceId: card.instanceId,
+      target: picked ? { kind: 'creature', instanceId: picked } : undefined,
+    };
+  }
+
+  /** Taps on my own stickers under League rules. */
+  private onPokemonCreatureClick(id: string): void {
+    const view = this.view;
+    const creature = this.findMyCreature(id);
+    if (!creature) return;
+    const onBench = view.you.row[0]?.instanceId !== id;
+
+    if (view.pendingPromote === view.myId && onBench) {
+      this.send({ type: 'promote', player: view.myId, targetInstanceId: id });
+      return;
+    }
+    if (this.retreatPicking && onBench) {
+      this.retreatPicking = false;
+      this.send({ type: 'swap', player: view.myId, targetInstanceId: id });
+      return;
+    }
+    const myTurn = view.active === view.myId && !view.gameOver && !view.spectator && view.pendingPromote == null;
+    if (myTurn && !onBench && view.phase === 'main1') {
+      this.showStickerMenu(creature);
+      return;
+    }
+    this.inspect(creature.def, creature);
+  }
+
+  /** The Active's action menu: moves, retreat, once-per-turn trait. */
+  private showStickerMenu(creature: CreatureOnBoard): void {
+    this.closeStickerMenu();
+    const view = this.view;
+    const game = stickerGame(creature.def);
+    if (!game) return;
+
+    const entries: { label: string; enabled: boolean; onPick?: () => void }[] = [];
+    const affordable = new Set(this.affordableMoves(creature).map((m) => m.index));
+    const blocked = statusBlocksAttack(creature);
+    game.moves.forEach((move, index) => {
+      const dmg = move.damageText || (move.damage > 0 ? String(move.damage) : '');
+      entries.push({
+        label: `${costLine(move.cost)}  ${move.name}${dmg ? ` · ${dmg}` : ''}`,
+        enabled: affordable.has(index) && !blocked,
+        onPick: () => this.send({ type: 'useMove', player: view.myId, moveIndex: index }),
+      });
+    });
+    const swapBase = passiveOps(creature).some((o) => o.op === 'swapCost' && o.value === 0) ? 0 : game.swapCost;
+    const benchReady = view.you.row.slice(1).some((c) => c !== null);
+    entries.push({
+      label: `↩  Retreat (${swapBase} energy)`,
+      enabled:
+        benchReady && !view.you.turnFlags?.swap && !statusBlocksSwap(creature) &&
+        (creature.reactions?.length ?? 0) >= swapBase,
+      onPick: () => {
+        this.retreatPicking = true;
+        this.renderAll();
+        this.toast('Pick a Bench sticker to switch in');
+      },
+    });
+    if (game.trait?.trigger === 'oncePerTurn') {
+      entries.push({
+        label: `✨  ${game.trait.name}`,
+        enabled: !creature.traitUsed,
+        onPick: () => this.send({ type: 'useTrait', player: view.myId, instanceId: creature.instanceId }),
+      });
+    }
+    entries.push({ label: '🔍  Inspect', enabled: true, onPick: () => this.inspect(creature.def, creature) });
+
+    const width = PORTRAIT ? 620 : 560;
+    const rowH = 64;
+    const height = entries.length * rowH + 88;
+    const cx = W / 2;
+    const cy = PORTRAIT ? H * 0.45 : H * 0.46;
+    const shade = this.add.rectangle(cx, H / 2, W, H, 0x05080f, 0.55).setDepth(930).setInteractive();
+    shade.once('pointerdown', () => this.closeStickerMenu());
+    const panel = this.add.graphics().setDepth(931);
+    panel.fillStyle(THEME.fx.overlayPanel, 0.97);
+    panel.fillRoundedRect(cx - width / 2, cy - height / 2, width, height, 16);
+    panel.lineStyle(3, THEME.fx.overlayAccent, 1);
+    panel.strokeRoundedRect(cx - width / 2, cy - height / 2, width, height, 16);
+    const title = this.add
+      .text(cx, cy - height / 2 + 34, creature.def.name, {
+        fontFamily: THEME.fonts.display, fontSize: '26px', color: THEME.fx.overlayTitle,
+      })
+      .setOrigin(0.5)
+      .setDepth(932);
+    this.stickerMenu = [shade, panel, title];
+    entries.forEach((entry, i) => {
+      const y = cy - height / 2 + 76 + i * rowH;
+      const btn = this.add
+        .text(cx, y, entry.label, {
+          fontFamily: THEME.fonts.body, fontSize: '23px',
+          color: entry.enabled ? THEME.hud.buttonText : THEME.hud.buttonDisabledText,
+          backgroundColor: `#${(entry.enabled ? THEME.hud.button : THEME.hud.buttonDisabled).toString(16).padStart(6, '0')}`,
+          padding: { x: 22, y: 10 }, fixedWidth: width - 60, align: 'center',
+        })
+        .setOrigin(0.5)
+        .setDepth(932);
+      if (entry.enabled && entry.onPick) {
+        btn.setInteractive({ useHandCursor: true });
+        btn.on('pointerdown', () => {
+          this.closeStickerMenu();
+          entry.onPick!();
+        });
+      }
+      this.stickerMenu.push(btn);
+    });
+  }
+
+  private closeStickerMenu(): void {
+    for (const obj of this.stickerMenu) obj.destroy();
+    this.stickerMenu = [];
   }
 
   // -------------------------------------------------- contextual target glow
@@ -351,6 +638,31 @@ export class GameScene extends Phaser.Scene {
     const view = this.view;
     const friendly = THEME.fx.glowFriendly;
     const enemy = THEME.fx.glowEnemy;
+
+    if (this.pokemon) {
+      const sticker = stickerGame(def);
+      if (sticker && sticker.stageIndex > 0) {
+        // Evolution: light up the stages it can land on.
+        const targets = view.you.row
+          .filter((c): c is CreatureOnBoard => !!c && (sticker.upgradesFrom === c.def.id || sticker.upgradesFrom === c.def.name))
+          .map((c) => c.instanceId);
+        this.myRow.highlight(new Set(targets), friendly);
+        return;
+      }
+      if (sticker) return; // basics drop onto the row markers
+      const trainer = trainerGame(def);
+      if (reactionGame(def) || trainer?.kind === 'gift') {
+        this.myRow.highlight(this.ids(view.you.row), friendly);
+        return;
+      }
+      const fx = trainer?.effects ?? [];
+      if (fx.some((op) => op.op === 'gust' || op.op === 'discardTool' || op.op === 'benchDamage')) {
+        this.oppRow.highlight(this.ids(view.opponent.row), enemy);
+      } else if (fx.some((op) => op.op === 'heal' || op.op === 'recoverAttach' || op.op === 'moveEnergy' || op.op === 'switchSelf')) {
+        this.myRow.highlight(this.ids(view.you.row), friendly);
+      }
+      return;
+    }
 
     if (def.type === 'creature') return; // row slots are already marked
     if (def.type === 'equipment') {
@@ -411,6 +723,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   private resolveDrop(card: CardInstance, x: number, y: number): Command | null {
+    if (this.pokemon) return this.resolvePokemonDrop(card, x, y);
     const view = this.view;
     const me = view.myId;
     const def = card.def;
@@ -478,6 +791,11 @@ export class GameScene extends Phaser.Scene {
   /** The one HUD button, contextual per phase (see hudOverrides). */
   private onHudButton(): void {
     const view = this.view;
+    if (this.pokemon) {
+      this.retreatPicking = false;
+      this.send({ type: 'endTurn', player: view.myId });
+      return;
+    }
     if (view.phase === 'block' && view.active !== view.myId) {
       const blocks = [...this.pendingBlocks].map(([blocker, attacker]) => ({ blocker, attacker }));
       this.send({ type: 'declareBlockers', player: view.myId, blocks });
@@ -509,6 +827,25 @@ export class GameScene extends Phaser.Scene {
     const view = this.view;
     const overrides: import('../objects/Hud.js').HudOverrides = {};
     if (this.concedeArmed) overrides.concedeLabel = 'Really concede?';
+
+    if (this.pokemon) {
+      if (view.phase === 'setup') {
+        overrides.button = { label: 'Waiting…', enabled: false };
+        overrides.banner = view.you.ready
+          ? 'Opponent is placing their board…'
+          : 'Drag a basic sticker out to start';
+      } else if (view.pendingPromote != null) {
+        overrides.button = { label: 'Waiting…', enabled: false };
+        overrides.banner =
+          view.pendingPromote === view.myId ? 'Choose your new Active sticker' : 'Opponent is promoting…';
+      } else if (myTurn) {
+        overrides.button = { label: 'End Turn ➤', enabled: true };
+        if (this.retreatPicking) overrides.banner = 'Pick a Bench sticker to switch in';
+      } else {
+        overrides.button = { label: 'Waiting…', enabled: false };
+      }
+      return overrides;
+    }
 
     if (view.rules.combatStyle === 'blockers') {
       if (amDefending) {
@@ -550,6 +887,15 @@ export class GameScene extends Phaser.Scene {
 
   private onMyCreatureClick(id: string): void {
     const view = this.view;
+    if (this.pokemon) {
+      if (view.spectator || view.gameOver) {
+        const c = this.findMyCreature(id);
+        if (c) this.inspect(c.def, c);
+      } else {
+        this.onPokemonCreatureClick(id);
+      }
+      return;
+    }
     const creature = this.findMyCreature(id);
     if (!creature) return;
     const myTurn = view.active === view.myId && !view.gameOver && !view.spectator;
@@ -622,6 +968,11 @@ export class GameScene extends Phaser.Scene {
 
   private onEnemyCreatureClick(id: string): void {
     const view = this.view;
+    if (this.pokemon) {
+      const creature = view.opponent.row.find((c) => c?.instanceId === id);
+      if (creature) this.inspect(creature.def, creature);
+      return;
+    }
     // Blockers-mode defense: with a blocker picked, tapping an attacking
     // enemy assigns the block.
     if (view.phase === 'block' && view.active !== view.myId && this.selectedBlocker) {
@@ -651,6 +1002,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   private onFaceClick(player: number): void {
+    if (this.pokemon) return; // no face attacks under League rules
     if (!this.selectedAttacker) return;
     if (player === this.view.myId) return this.deselect();
     if (!this.canAttackFace()) {
@@ -665,6 +1017,11 @@ export class GameScene extends Phaser.Scene {
   }
 
   private deselect(): void {
+    if (this.retreatPicking) {
+      this.retreatPicking = false;
+      this.clearTargets();
+      this.renderAll();
+    }
     if (this.selectedAttacker) {
       const sprite = this.myRow.spriteFor(this.selectedAttacker);
       if (sprite) {
@@ -753,6 +1110,24 @@ export class GameScene extends Phaser.Scene {
         break;
       case 'gameOver':
         playSound(ev.winner === this.view.myId ? 'victory' : 'defeat');
+        break;
+      // ---- pokemon mode ----
+      case 'moveUsed':
+        playSound('attack');
+        break;
+      case 'coinFlip':
+        playSound('click');
+        break;
+      case 'energyAttached':
+      case 'upgraded':
+        playSound('buff');
+        break;
+      case 'swapped':
+      case 'promoted':
+        playSound('summon');
+        break;
+      case 'prizeTaken':
+        playSound('draw');
         break;
     }
   }
@@ -872,6 +1247,57 @@ export class GameScene extends Phaser.Scene {
           if (pos) Fx.impact(this, pos.x, pos.y, THEME.fx.glowFriendly);
           break;
         }
+        // ---- pokemon mode ----
+        case 'moveUsed': {
+          const from = creaturePos(ev.instanceId);
+          const defender = ev.player === view.myId ? view.opponent.row[0] : view.you.row[0];
+          const to = defender ? creaturePos(defender.instanceId) : null;
+          if (from && to) {
+            const streak = this.add.circle(from.x, from.y, 14, THEME.fx.arrow, 0.9).setDepth(790);
+            this.tweens.add({
+              targets: streak, x: to.x, y: to.y, duration: 180, ease: 'Cubic.easeIn',
+              onComplete: () => { streak.destroy(); Fx.impact(this, to.x, to.y); },
+            });
+          }
+          if (from) Fx.floatText(this, from.x, from.y - 70, `⚔ ${ev.move}`, THEME.fx.buffText);
+          break;
+        }
+        case 'moveFailed': {
+          const pos = creaturePos(ev.instanceId);
+          if (pos) Fx.floatText(this, pos.x, pos.y - 70, '😵 it hurt itself!', THEME.fx.damageText);
+          break;
+        }
+        case 'coinFlip':
+          Fx.floatText(this, W / 2, H * 0.42, ev.heads ? '🪙 Heads' : '🪙 Tails', THEME.fx.buffText);
+          break;
+        case 'energyAttached': {
+          const pos = creaturePos(ev.targetInstanceId);
+          if (pos) Fx.impact(this, pos.x, pos.y, THEME.fx.glowFriendly);
+          break;
+        }
+        case 'upgraded': {
+          const pos = creaturePos(ev.instanceId);
+          if (pos) {
+            Fx.impact(this, pos.x, pos.y, THEME.fx.glowPlayable);
+            Fx.floatText(this, pos.x, pos.y - 70, `⬆ ${ev.cardName}`, THEME.fx.buffText);
+          }
+          break;
+        }
+        case 'promoted':
+        case 'swapped': {
+          const pos = creaturePos(ev.instanceId);
+          if (pos) Fx.floatText(this, pos.x, pos.y - 60, `${ev.cardName} steps up`, THEME.fx.buffText);
+          break;
+        }
+        case 'prizeTaken': {
+          const mine = ev.player === view.myId;
+          Fx.turnBanner(
+            this, W, H,
+            `${mine ? 'You take' : 'Opponent takes'} ${ev.count === 1 ? 'a prize' : `${ev.count} prizes`}! (${ev.remaining} left)`,
+            mine ? THEME.hud.bannerActive : THEME.hud.bannerIdle
+          );
+          break;
+        }
       }
     }
   }
@@ -916,6 +1342,30 @@ export class GameScene extends Phaser.Scene {
         return `${who(ev.player)} mulliganed ${ev.count} cards`;
       case 'fatigue':
         return `${who(ev.player)} ran out of cards!`;
+      case 'moveUsed':
+        return `${ev.cardName} used ${ev.move}`;
+      case 'moveFailed':
+        return `${ev.cardName}'s move failed (${ev.reason})`;
+      case 'coinFlip':
+        return `🪙 ${who(ev.player)} flipped ${ev.heads ? 'heads' : 'tails'}`;
+      case 'energyAttached':
+        return `${who(ev.player)} attached ${ev.cardName} to ${ev.targetName}`;
+      case 'energyDiscarded':
+        return `${who(ev.player)} discarded ${ev.count} energy`;
+      case 'upgraded':
+        return `${ev.fromName} evolved into ${ev.cardName}`;
+      case 'swapped':
+        return `${who(ev.player)} switched ${ev.cardName} in`;
+      case 'promoted':
+        return `${who(ev.player)} promoted ${ev.cardName}`;
+      case 'prizeTaken':
+        return `${who(ev.player)} took ${ev.count === 1 ? 'a prize' : `${ev.count} prizes`} (${ev.remaining} left)`;
+      case 'channelPlayed':
+        return `${who(ev.player)} put ${ev.cardName} in play`;
+      case 'handRevealed':
+        return `${who(ev.player)} revealed: ${ev.cardNames.join(', ') || 'nothing'}`;
+      case 'playerReady':
+        return `${who(ev.player)} is ready`;
       case 'gameOver':
         return `${who(ev.winner)} won: ${ev.reason}`;
       default:

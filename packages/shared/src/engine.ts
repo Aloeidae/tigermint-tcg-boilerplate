@@ -7,6 +7,7 @@ import { resolveAttack, resolveBlocks, toggleAttacker } from './combat.js';
 import { mergeRules, type RulesConfig } from './rules.js';
 import { creatureHasFlag, getSkill, runHook, runRowHook } from './skills.js';
 import { tickStatuses } from './statuses.js';
+import { applyPokemonCommand, initPokemonGame } from './pokemon/engine.js';
 
 export type CommandResult =
   | { ok: true; state: GameState; events: GameEvent[] }
@@ -86,6 +87,11 @@ export function createGame(setup: GameSetup): { state: GameState; events: GameEv
   };
 
   const events: GameEvent[] = [{ type: 'gameStarted' }];
+  // Pokemon mode opens with a setup phase instead of the standard draw.
+  if (rules.gameMode === 'pokemon') {
+    initPokemonGame(state, events, rng);
+    return { state, events };
+  }
   for (const p of state.players) {
     for (let i = 0; i < rules.openingHand; i++) drawCard(state, p.id, events);
   }
@@ -147,6 +153,9 @@ export function applyCommand(state: GameState, cmd: Command): CommandResult {
     endGame(next, other(cmd.player), `${next.players[cmd.player].name} conceded`, events);
     return { ok: true, state: next, events };
   }
+
+  // Pokemon mode has its own turn structure and command set.
+  if (state.rules.gameMode === 'pokemon') return applyPokemonCommand(state, cmd);
 
   // Mulligans are decided during the first round by BOTH players, so this
   // command (like concede) is exempt from the active-player check.
@@ -322,5 +331,8 @@ export function applyCommand(state: GameState, cmd: Command): CommandResult {
       startTurn(next, other(cmd.player), events);
       return { ok: true, state: next, events };
     }
+
+    default:
+      return { ok: false, error: 'Not available under these rules' };
   }
 }

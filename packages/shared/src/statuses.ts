@@ -45,6 +45,8 @@ export interface StatusDef {
   describe: (value: number) => string;
   /** Bearer cannot attack while this status is present (Frozen). */
   blocksAttack?: boolean;
+  /** Bearer cannot retreat/swap while this status is present (pokemon mode). */
+  blocksSwap?: boolean;
   hooks?: {
     /** At the bearer's owner's turn start (Poison ticks here). */
     onTurnStart?: (ctx: StatusHookContext) => void;
@@ -123,6 +125,11 @@ export function applyStatus(
 /** True while any status on the creature forbids attacking (Frozen). */
 export function statusBlocksAttack(creature: CreatureOnBoard): boolean {
   return creature.statuses.some((s) => registry.get(s.key)?.blocksAttack);
+}
+
+/** True while any status forbids retreating (Asleep/Paralyzed, swap locks). */
+export function statusBlocksSwap(creature: CreatureOnBoard): boolean {
+  return creature.statuses.some((s) => registry.get(s.key)?.blocksSwap);
 }
 
 function ctxFor(

@@ -35,4 +35,25 @@ export type Command =
   | { type: 'endTurn'; player: PlayerId }
   /** Shuffle back the opening hand and redraw (rules.mulligan, first round only). */
   | { type: 'mulligan'; player: PlayerId }
-  | { type: 'concede'; player: PlayerId };
+  | { type: 'concede'; player: PlayerId }
+  // ---- Pokemon game mode (rules.gameMode 'pokemon') ----
+  /** Setup phase: place the opening Active (and optional Bench basics). Both players send one. */
+  | { type: 'setup'; player: PlayerId; pinnedId: string; benchIds?: string[] }
+  /** Play a basic sticker from hand onto the Bench (or the empty Active spot). */
+  | { type: 'playSticker'; player: PlayerId; instanceId: string; slot?: number }
+  /** Evolve: play a stage-1/2 sticker from hand on top of its lower stage. */
+  | { type: 'upgrade'; player: PlayerId; instanceId: string; targetInstanceId: string }
+  /** Attach one energy (reaction) card from hand — once per turn. */
+  | { type: 'attachReaction'; player: PlayerId; instanceId: string; targetInstanceId: string }
+  /** Attach a Tool (gift) — one per sticker. */
+  | { type: 'attachGift'; player: PlayerId; instanceId: string; targetInstanceId: string }
+  /** Play an Item/Supporter/Stadium (bot/admin/channel). */
+  | { type: 'playTrainer'; player: PlayerId; instanceId: string; target?: EffectTarget }
+  /** Use a once-per-turn trait on one of your stickers. */
+  | { type: 'useTrait'; player: PlayerId; instanceId: string; target?: EffectTarget }
+  /** Retreat: pay the Active's swap cost in energy, exchange it with a Bench sticker. */
+  | { type: 'swap'; player: PlayerId; targetInstanceId: string }
+  /** Attack with the Active's move. Ends the turn. */
+  | { type: 'useMove'; player: PlayerId; moveIndex: number; target?: EffectTarget }
+  /** After a knockout: pick the new Active. Sent by whoever lost theirs. */
+  | { type: 'promote'; player: PlayerId; targetInstanceId: string };

@@ -6,7 +6,7 @@
   "main": "src/index.ts",
   "types": "src/index.ts",
   "scripts": {
-    "test": "tsx --test test/engine.test.ts",
+    "test": "tsx --test test/engine.test.ts test/pokemon.test.ts",
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
