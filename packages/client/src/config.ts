@@ -24,11 +24,16 @@ export const CONFIG = {
    * otherwise. 'framed': the system draws the card frame and the NFT image
    * fills the art window. 'fullart': the NFT image IS the card — for
    * collections whose art is a complete card design (name, stats and skills
-   * painted into the art; skills must then come from metadata).
+   * painted into the art; skills must then come from metadata). 'overlay':
+   * the image renders full-bleed and the system composites name/stats/text
+   * over it at layout-assigned positions — for plain art with no painted-in
+   * card design (see shared/src/overlay.ts).
    */
-  cardStyle: /full/i.test((import.meta.env.VITE_CARD_STYLE as string | undefined) ?? '')
-    ? ('fullart' as const)
-    : ('framed' as const),
+  cardStyle: /overlay|text/i.test((import.meta.env.VITE_CARD_STYLE as string | undefined) ?? '')
+    ? ('overlay' as const)
+    : /full/i.test((import.meta.env.VITE_CARD_STYLE as string | undefined) ?? '')
+      ? ('fullart' as const)
+      : ('framed' as const),
 
   /**
    * Where the menu's "mint your own cards" link points. TigerMint is the

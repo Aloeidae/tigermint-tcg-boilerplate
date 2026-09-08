@@ -214,6 +214,18 @@ export class MenuScene extends Phaser.Scene {
     const btnSpectate = document.getElementById('btn-spectate') as HTMLButtonElement;
     btnAi.onclick = () => void this.startVsAi();
     btnDeck.onclick = () => void this.openDeckBuilder();
+
+    // Dev builds get the overlay-card layout editor next to the deck builder.
+    if (import.meta.env.DEV && !document.getElementById('btn-layout')) {
+      const btnLayout = document.createElement('button');
+      btnLayout.id = 'btn-layout';
+      btnLayout.className = 'menu-btn secondary';
+      btnLayout.textContent = '🎨';
+      btnLayout.title = 'Card layout editor (dev only)';
+      btnDeck.after(btnLayout);
+    }
+    const btnLayout = document.getElementById('btn-layout') as HTMLButtonElement | null;
+    if (btnLayout) btnLayout.onclick = () => void this.openLayoutEditor();
     btnQueue.onclick = () => this.toggleQueue();
     btnCreate.onclick = () => this.startPvp('create');
     btnJoin.onclick = () => this.startPvp('join');
@@ -494,6 +506,19 @@ export class MenuScene extends Phaser.Scene {
     if (this.rules.gameMode !== 'pokemon') return this.deck;
     const pool = [...(this.pack?.cards ?? []), ...this.nftCards].filter((d) => d.game);
     return buildStarterPokemonDeck(pool.length > 0 ? pool : POKEMON_DEMO_CARDS, this.rules.deckSize);
+  }
+
+  /** Dev-only: the overlay-card layout editor (see scenes/LayoutScene.ts). */
+  private async openLayoutEditor(): Promise<void> {
+    this.setError('');
+    const pool = [
+      ...(this.pack?.cards ?? []),
+      ...this.nftCards,
+      ...(this.pack ? [] : [...DEMO_CATALOG, ...POKEMON_DEMO_CARDS]),
+    ].slice(0, 40);
+    await ensureArtTextures(this, pool);
+    this.showOverlay(false);
+    this.scene.start('Layout', { pool });
   }
 
   /** Open the deck builder over everything currently pickable. */

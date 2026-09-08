@@ -1,5 +1,6 @@
 import type { RulesConfig } from './rules.js';
 import type { GameBlock, PokemonTurnFlags } from './pokemon/types.js';
+import type { OverlayLayout } from './overlay.js';
 
 export type PlayerId = 0 | 1;
 
@@ -84,6 +85,15 @@ export interface CardDef {
    * full-bleed and only overlays live values like cost and current stats.
    */
   fullArt?: boolean;
+  /**
+   * Explicit card style; wins over `fullArt` when present. 'overlay' renders
+   * the art full-bleed and composites name/stats/text over it at positions
+   * from the overlay layout (see overlay.ts) — for plain art images that
+   * carry no painted-in card design.
+   */
+  style?: 'framed' | 'fullArt' | 'overlay';
+  /** Per-card overlay-layout override, merged over the theme/pack layout. */
+  layout?: OverlayLayout;
   /**
    * Pull-weight tier from the mint (LEGENDARY / EPIC / RARE / COMMON).
    * Cosmetic in-game — the deck builder tints card glows with it.

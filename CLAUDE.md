@@ -81,7 +81,10 @@ implementations of that interface.
 | TigerMint in-game pulls | `client/src/ton/pull.ts` + `MenuScene.ts` |
 | Pack mint preflight (`npm run mint-pack`) | `scripts/mint-pack.mjs` (minting itself happens in TigerMint's Pro Wizard) |
 | Local pre-mint card packs | `client/src/pack.ts`, `public/pack/` |
-| Card rendering (frames, badges, full-art) | `client/src/objects/CardSprite.ts` |
+| Card rendering (frames, badges, full-art, overlay) | `client/src/objects/CardSprite.ts` |
+| Overlay-card layout model / merge layers | `shared/src/overlay.ts`, `client/src/overlayConfig.ts` |
+| Overlay scrim (gradient/pattern panel) | `client/src/objects/cardScrim.ts` |
+| Overlay layout editor (dev-only 🎨) | `client/src/scenes/LayoutScene.ts` |
 | Deck builder | `client/src/scenes/DeckScene.ts` + `MenuScene.rebuildDeck()` |
 | Layout positions (landscape AND portrait/TMA) | `client/src/layout.ts` |
 | Board/hand/HUD layout & interactions | `client/src/scenes/GameScene.ts`, `objects/` |
@@ -131,6 +134,14 @@ arrows (`switchPack` in MenuScene, `#pull-body` slide in index.html).
 - Cards are 3:4; art renders with center-crop (`coverCrop` in CardSprite),
   never stretched. Badge placement is `THEME.card.badges`: per style
   (framed/fullArt), each badge = anchor region + padX/padY (+ optional size).
+- THREE card styles: framed, fullArt, and `overlay` (`CardDef.style` wins
+  over the `fullArt` boolean). Overlay composites text over full-bleed art
+  from an OverlayLayout (shared/src/overlay.ts — pure data: nine anchors,
+  pads as width fractions, text sizes as height fractions), merged
+  theme default ← pack.json `layout` ← per-card `layout` ← the DEV editor's
+  localStorage draft (overlayConfig.mergedOverlay). The scrim renders once
+  into a cached CanvasTexture (cardScrim.ts). The 🎨 layout editor
+  (LayoutScene) exists only in DEV builds.
 - Branding drop-ins live in `public/pack/` (gitignored user content):
   `back.jpeg` = card back, `banner.png` = menu banner. Pull prices are always
   labeled GRAM, read from TigerMint's mint terms — never make that a config.

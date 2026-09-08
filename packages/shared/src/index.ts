@@ -12,6 +12,7 @@ export * from './effects.js';
 export * from './cards.js';
 export * from './redact.js';
 export * from './ai.js';
+export * from './overlay.js';
 export { other, findCreature } from './helpers.js';
 
 // Pokemon game mode (rules.gameMode 'pokemon').

@@ -51,11 +51,23 @@ export function nftToCard(nft: NftItem): CardDef {
 
   const cost = clamp(attr('cost') ?? 1 + ((h >>> 4) % 6), 1, 10);
 
-  // Card style: a "Card Style" attribute ("full art" / "framed") wins over
-  // the game-wide default. Full-art NFTs are complete card designs — the
-  // client renders the image as the whole card.
+  // Card style: a "Card Style" attribute ("full art" / "framed" /
+  // "overlay") wins over the game-wide default. Full-art NFTs are complete
+  // card designs rendered as-is; overlay NFTs are plain art the client
+  // composites the text layer onto (layout from the pack manifest/theme).
   const styleAttr = attrText('card style') ?? attrText('style');
-  const fullArt = styleAttr ? /full/.test(styleAttr) : CONFIG.cardStyle === 'fullart';
+  const style = styleAttr
+    ? /overlay|text/.test(styleAttr)
+      ? ('overlay' as const)
+      : /full/.test(styleAttr)
+        ? ('fullArt' as const)
+        : ('framed' as const)
+    : CONFIG.cardStyle === 'overlay'
+      ? ('overlay' as const)
+      : CONFIG.cardStyle === 'fullart'
+        ? ('fullArt' as const)
+        : ('framed' as const);
+  const fullArt = style === 'fullArt';
 
   const base: CardDef = {
     id: nft.address,
@@ -64,6 +76,7 @@ export function nftToCard(nft: NftItem): CardDef {
     cost,
     art: nft.image,
     fullArt: fullArt || undefined,
+    style: style === 'overlay' ? 'overlay' : undefined,
     // Minted items carry a "Rarity" trait (appended by TigerMint).
     rarity: attrRaw('rarity')?.toUpperCase(),
   };

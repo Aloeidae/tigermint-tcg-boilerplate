@@ -1,6 +1,11 @@
 import Phaser from 'phaser';
-import { creatureSkills, effectText, getStatus, skillLine, type CardDef, type CreatureOnBoard } from '@tcg/shared';
+import {
+  creatureSkills, effectText, getStatus, skillLine, stickerGame,
+  type CardDef, type CreatureOnBoard, type OverlayElement, type OverlaySpot,
+} from '@tcg/shared';
 import { THEME } from '../theme.js';
+import { mergedOverlay } from '../overlayConfig.js';
+import { addScrim } from './cardScrim.js';
 
 export interface CardSpriteOptions {
   /** Board creature to show live stats for (hand cards omit this). */
@@ -79,11 +84,20 @@ export class CardSprite extends Phaser.GameObjects.Container {
       return;
     }
 
+    // Overlay card: full-bleed art with the whole text layer composited over
+    // it at layout-assigned positions (shared/src/overlay.ts + overlayConfig).
+    const style = def.style ?? (def.fullArt ? 'fullArt' : 'framed');
+    if (style === 'overlay') {
+      this.renderOverlay(scene, g, opts);
+      scene.add.existing(this);
+      return;
+    }
+
     // Full-art card: the (NFT) image IS the card. Only live game values are
     // overlaid — cost, current creature stats, equipment count. Name, text
     // and skills are part of the owner's art (skills come from metadata).
     const fullArtKey = `art:${def.id}`;
-    if (def.fullArt && def.art && scene.textures.exists(fullArtKey)) {
+    if (style === 'fullArt' && def.art && scene.textures.exists(fullArtKey)) {
       const img = scene.add.image(0, 0, fullArtKey);
       coverCrop(scene, img, fullArtKey, w, h);
       this.add(img);
@@ -282,6 +296,173 @@ export class CardSprite extends Phaser.GameObjects.Container {
     scene.add.existing(this);
   }
 
+  /**
+   * The `overlay` style: full-bleed art, an optional scrim, then every
+   * layout-placed element as styled text or a gem badge. Layout layers
+   * merge in overlayConfig (theme default <- pack <- card <- editor draft).
+   */
+  private renderOverlay(scene: Phaser.Scene, g: Phaser.GameObjects.Graphics, opts: CardSpriteOptions): void {
+    const def = this.def;
+    const w = this.cardWidth;
+    const h = this.cardHeight;
+    const T = THEME.card;
+    const layout = mergedOverlay(def);
+    const sticker = stickerGame(def);
+
+    // Art (or the framed style's placeholder treatment, full-bleed).
+    const artKey = `art:${def.id}`;
+    if (def.art && scene.textures.exists(artKey)) {
+      const img = scene.add.image(0, 0, artKey);
+      coverCrop(scene, img, artKey, w, h);
+      this.add(img);
+    } else {
+      g.fillStyle(placeholderColor(def.id), 1);
+      g.fillRoundedRect(-w / 2, -h / 2, w, h, 10);
+      const initial = scene.add
+        .text(0, -h * 0.12, def.name.charAt(0).toUpperCase(), {
+          fontFamily: THEME.fonts.display, fontSize: `${Math.round(h * 0.3)}px`, color: T.artInitial,
+        })
+        .setOrigin(0.5);
+      this.add(initial);
+    }
+
+    if (layout.scrim) {
+      const scrim = addScrim(scene, layout.scrim, w, h);
+      if (scrim) this.add(scrim);
+    }
+    const border = scene.add.graphics();
+    border.lineStyle(3, T.frame, 1);
+    border.strokeRoundedRect(-w / 2, -h / 2, w, h, 10);
+    this.add(border);
+
+    // Elements, back to front (badges last so gems ride above text blocks).
+    const gTop = scene.add.graphics();
+    this.add(gTop);
+    const order: OverlayElement[] = [
+      'description', 'moves', 'skills', 'type', 'name', 'rarity',
+      'defense', 'swapCost', 'cost', 'attack', 'health',
+    ];
+    for (const key of order) {
+      const spot = layout.elements?.[key];
+      if (!spot) continue;
+      if (spot.hideBelow !== undefined && w < spot.hideBelow) continue;
+      // League stickers list moves where prose would go — moves win.
+      if (key === 'description' && sticker && layout.elements?.moves) continue;
+      const value = this.overlayValue(key, opts.creature);
+      if (value === null) continue;
+      const pos = overlaySpotPos(w, h, spot);
+      const render = spot.render ?? (key === 'cost' || key === 'attack' || key === 'health' ? 'badge' : 'text');
+      if (render === 'badge') {
+        const size = w * (spot.size ?? THEME.card.badges.size);
+        const cx = pos.x + (0.5 - pos.ox) * size;
+        const cy = pos.y + (0.5 - pos.oy) * size;
+        const fill = spot.color ? parseColor(spot.color) : BADGE_FILL[key] ?? T.equipChip;
+        this.badge(scene, gTop, cx - size / 2, cy - size / 2, size, fill, value.text, value.tint ?? T.gemText);
+      } else {
+        this.overlayText(scene, spot, pos, value, w, h);
+      }
+    }
+
+    // Live board overlays behave exactly as on the other styles.
+    if (opts.creature && opts.creature.equipment.length > 0) {
+      const eq = badgeSpot(w, h, 'fullArt', 'equip');
+      this.badge(scene, gTop, eq.x, eq.y, eq.size, T.equipChip, `⚔${opts.creature.equipment.length}`);
+    }
+    if (opts.creature) this.statusStrip(scene, opts.creature, w, h);
+    if (opts.creature && sticker) this.energyStrip(scene, opts.creature, w, h);
+    if (opts.dim) this.add(scene.add.rectangle(0, 0, w, h, 0x000000, 0.35));
+    this.applyFoil(opts.dim);
+  }
+
+  private overlayText(
+    scene: Phaser.Scene,
+    spot: OverlaySpot,
+    pos: { x: number; y: number; ox: number; oy: number },
+    value: { text: string; tint?: string },
+    w: number,
+    h: number
+  ): void {
+    const sizePx = Math.max(8, Math.round((spot.size ?? 0.04) * h));
+    const style: Phaser.Types.GameObjects.Text.TextStyle = {
+      fontFamily: THEME.fonts[spot.font ?? 'body'],
+      fontSize: `${sizePx}px`,
+      color: value.tint ?? spot.color ?? '#ffffff',
+      fontStyle: [spot.bold && 'bold', spot.italic && 'italic'].filter(Boolean).join(' ') || 'normal',
+      align: spot.align ?? (pos.ox === 0 ? 'left' : pos.ox === 1 ? 'right' : 'center'),
+    };
+    if (spot.stroke) {
+      style.stroke = spot.stroke;
+      style.strokeThickness = Math.max(1, Math.round((spot.strokeThickness ?? 0.006) * h));
+    }
+    if (spot.wrap) style.wordWrap = { width: spot.wrap * w };
+    const text = spot.upper ? value.text.toUpperCase() : value.text;
+    const t = scene.add.text(pos.x, pos.y, text, style).setOrigin(pos.ox, pos.oy);
+    if (spot.maxLines && spot.maxLines > 0) {
+      const lines = t.getWrappedText(text);
+      if (lines.length > spot.maxLines) {
+        t.setText([...lines.slice(0, spot.maxLines - 1), `${lines[spot.maxLines - 1]}…`]);
+      }
+    }
+    this.add(t);
+  }
+
+  /** What an overlay element shows for this card; null renders nothing. */
+  private overlayValue(key: OverlayElement, creature?: CreatureOnBoard): { text: string; tint?: string } | null {
+    const def = this.def;
+    const T = THEME.card;
+    const sticker = stickerGame(def);
+    switch (key) {
+      case 'name':
+        return { text: def.name };
+      case 'type':
+        return sticker
+          ? { text: `${sticker.typeEmoji ?? TYPE_EMOJI[sticker.type] ?? ''} ${sticker.type}`.trim() }
+          : { text: def.type };
+      case 'cost':
+        return { text: String(def.cost) };
+      case 'attack': {
+        if (sticker || def.type !== 'creature') return null;
+        const atk = creature?.attack ?? def.attack ?? 0;
+        return { text: String(atk), tint: atk > (def.attack ?? 0) ? T.buffedText : undefined };
+      }
+      case 'health': {
+        if (sticker) {
+          const hp = creature?.health ?? sticker.hp;
+          return { text: String(hp), tint: hp < (creature?.maxHealth ?? sticker.hp) ? T.damagedText : undefined };
+        }
+        if (def.type !== 'creature') return null;
+        const hp = creature?.health ?? def.health ?? 1;
+        const maxHp = creature?.maxHealth ?? def.health ?? 1;
+        return { text: String(hp), tint: hp < maxHp ? T.damagedText : undefined };
+      }
+      case 'defense': {
+        const refs = creature ? creatureSkills(creature) : def.skills;
+        const armor = refs?.find((r) => r.key === 'armor');
+        return armor ? { text: `⛨ ${armor.value ?? 1}` } : null;
+      }
+      case 'description': {
+        const text = def.text ?? effectText(def.effect) ?? '';
+        return text ? { text } : null;
+      }
+      case 'skills': {
+        if (sticker) return sticker.trait ? { text: `✨ ${sticker.trait.name}` } : null;
+        const line = skillLine(creature ? creatureSkills(creature) : def.skills);
+        return line ? { text: line } : null;
+      }
+      case 'rarity':
+        return def.rarity ? { text: def.rarity } : null;
+      case 'moves': {
+        if (!sticker) return null;
+        const lines = sticker.moves.map(
+          (m) => `${costLine(m.cost)} ${m.name}${m.damage || m.damageText ? ` · ${m.damageText || m.damage}` : ''}`
+        );
+        return lines.length > 0 ? { text: lines.join('\n') } : null;
+      }
+      case 'swapCost':
+        return sticker && sticker.swapCost > 0 ? { text: `↩${sticker.swapCost}` } : null;
+    }
+  }
+
   /** Foil shine on high-rarity cards (see THEME.card.foil). Dimmed cards stay matte. */
   private applyFoil(dim?: boolean): void {
     if (dim) return;
@@ -429,6 +610,59 @@ function coverCrop(scene: Phaser.Scene, img: Phaser.GameObjects.Image, key: stri
 
 function fitName(name: string): string {
   return name.length > 16 ? `${name.slice(0, 15)}…` : name;
+}
+
+/**
+ * An overlay spot's position + text origin in card-local coordinates.
+ * Pads are fractions of card WIDTH, inward from edges (signed right/down on
+ * centered axes) — the same convention as badge placement. Exported for the
+ * dev layout editor, which drags elements and back-computes these.
+ */
+export function overlaySpotPos(
+  w: number,
+  h: number,
+  spot: OverlaySpot
+): { x: number; y: number; ox: number; oy: number } {
+  const px = (spot.padX ?? 0) * w;
+  const py = (spot.padY ?? 0) * w;
+  let x: number;
+  let ox: number;
+  if (spot.anchor.endsWith('Left')) {
+    x = -w / 2 + px;
+    ox = 0;
+  } else if (spot.anchor.endsWith('Right')) {
+    x = w / 2 - px;
+    ox = 1;
+  } else {
+    x = px;
+    ox = 0.5;
+  }
+  let y: number;
+  let oy: number;
+  if (spot.anchor.startsWith('top')) {
+    y = -h / 2 + py;
+    oy = 0;
+  } else if (spot.anchor.startsWith('bottom')) {
+    y = h / 2 - py;
+    oy = 1;
+  } else {
+    y = py;
+    oy = 0.5;
+  }
+  return { x, y, ox, oy };
+}
+
+/** Default gem fill per badge-rendered overlay element. */
+const BADGE_FILL: Partial<Record<OverlayElement, number>> = {
+  cost: THEME.card.costGem,
+  attack: THEME.card.attackGem,
+  health: THEME.card.healthGem,
+};
+
+/** '#rrggbb' -> 0xrrggbb (layout data uses strings for JSON-friendliness). */
+function parseColor(hex: string): number {
+  const n = parseInt(hex.replace('#', ''), 16);
+  return Number.isFinite(n) ? n : 0xffffff;
 }
 
 /** Fallback emoji per pokemon-mode energy type (cards may carry their own). */

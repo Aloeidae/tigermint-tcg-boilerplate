@@ -21,11 +21,14 @@ export class BootScene extends Phaser.Scene {
     // are fine, every one has a procedural fallback:
     //   back.jpeg / back.png     -> the card back
     //   banner.png / banner.jpeg -> the menu banner (replaces the title text)
+    //   scrim.png / scrim.jpeg   -> tile for overlay-card scrims (pattern:'image')
     this.load.image('card-back', '/pack/back.jpeg');
     this.load.image('menu-banner', '/pack/banner.png');
+    this.load.image('pack-scrim', '/pack/scrim.png');
     this.load.on(Phaser.Loader.Events.FILE_LOAD_ERROR, (file: Phaser.Loader.File) => {
       if (file.key === 'card-back') this.load.image('card-back', '/pack/back.png');
       if (file.key === 'menu-banner') this.load.image('menu-banner', '/pack/banner.jpeg');
+      if (file.key === 'pack-scrim') this.load.image('pack-scrim', '/pack/scrim.jpeg');
     });
     // this.load.image('bg-board', 'assets/board-background.png');
   }

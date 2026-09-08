@@ -1,6 +1,30 @@
 {
     "name":  "Snugglefang Woods",
-    "_readme":  "EXAMPLE manifest (a cute-animal demo set). To use your own pack: copy this file to pack.json in this folder, replace the cards with your own names/stats/skills, and drop your images next to it. Cards are full-art by default: the image IS the card and the game only overlays cost/attack/health badges. Skills and effects are matched by name against the registries in @tcg/shared. rarity (LEGENDARY/EPIC/RARE/COMMON) sets each card's pull-weight tier when you mint the pack on TigerMint — run `npm run mint-pack` to launch this exact file as a real drop. Two optional per-card fields: description (flavor text, max 500 chars, minted as the item description and shown as card text locally) and editions (that card's print run — how many copies exist in the drop; rarity-tier defaults apply when absent). Deck access follows rarity: COMMON (or unset) cards form the basic deck everyone plays free; RARE/EPIC/LEGENDARY cards are mint-only — players must pull the NFT to play them (they show locked in the deck builder until owned). A per-card boolean `basic` overrides that rule either way (see Snowshoe Archer: a rare kept free). pack.json and your images are gitignored, so your pack stays local unless you choose to commit it.",
+    "_readme":  "EXAMPLE manifest (a cute-animal demo set). To use your own pack: copy this file to pack.json in this folder, replace the cards with your own names/stats/skills, and drop your images next to it. Cards are full-art by default: the image IS the card and the game only overlays cost/attack/health badges. A per-card `style` picks between 'framed', 'fullart', and 'overlay' — overlay renders the image full-bleed and composites the whole text layer (name, stats, type, description, skills) over it at positions from the top-level `layout` block (see Badger Bruiser; tune layouts with the menu's dev 🎨 editor and paste its Copy-JSON output here). The layout's optional scrim is a colorable gradient (plain, patterned stripes/dots/grid/noise, or a tiled scrim.png from this folder) behind the text. Skills and effects are matched by name against the registries in @tcg/shared. rarity (LEGENDARY/EPIC/RARE/COMMON) sets each card's pull-weight tier when you mint the pack on TigerMint — run `npm run mint-pack` to launch this exact file as a real drop. Two optional per-card fields: description (flavor text, max 500 chars, minted as the item description and shown as card text locally) and editions (that card's print run — how many copies exist in the drop; rarity-tier defaults apply when absent). Deck access follows rarity: COMMON (or unset) cards form the basic deck everyone plays free; RARE/EPIC/LEGENDARY cards are mint-only — players must pull the NFT to play them (they show locked in the deck builder until owned). A per-card boolean `basic` overrides that rule either way (see Snowshoe Archer: a rare kept free). pack.json and your images are gitignored, so your pack stays local unless you choose to commit it.",
+    "layout":  {
+                   "scrim":  {
+                                 "edge":  "bottom",
+                                 "height":  0.45,
+                                 "color":  "#0d0d0d",
+                                 "alpha":  0.82,
+                                 "fade":  0.4,
+                                 "pattern":  "stripes",
+                                 "patternColor":  "#f97316",
+                                 "patternAlpha":  0.08
+                             },
+                   "elements":  {
+                                    "rarity":  {
+                                                   "anchor":  "topRight",
+                                                   "padX":  0.05,
+                                                   "padY":  0.05,
+                                                   "size":  0.03,
+                                                   "font":  "mono",
+                                                   "color":  "#fdba74",
+                                                   "upper":  true,
+                                                   "hideBelow":  220
+                                               }
+                                }
+               },
     "cards":  [
                   {
                       "name":  "Cinder Kit",
@@ -60,7 +84,9 @@
                       "attack":  4,
                       "health":  3,
                       "art":  "badger-bruiser.jpeg",
-                      "rarity":  "RARE"
+                      "rarity":  "RARE",
+                      "style":  "overlay",
+                      "description":  "Knocks first. Through the door."
                   },
                   {
                       "name":  "Garden Adder",

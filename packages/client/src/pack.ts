@@ -1,5 +1,9 @@
-import { DECK_SIZE, findEffectKey, findSkillKey, type CardDef, type GameBlock, type SkillRef } from '@tcg/shared';
+import {
+  DECK_SIZE, findEffectKey, findSkillKey, isOverlayLayout,
+  type CardDef, type GameBlock, type OverlayLayout, type SkillRef,
+} from '@tcg/shared';
 import { CONFIG } from './config.js';
+import { setPackOverlayLayout } from './overlayConfig.js';
 
 /**
  * Local card pack loader — play your custom cards BEFORE minting them.
@@ -49,6 +53,14 @@ interface PackCardJson {
   description?: string;
   art?: string;
   fullArt?: boolean;
+  /**
+   * Card style: 'framed' | 'fullart' | 'overlay'. Wins over `fullArt`.
+   * 'overlay' composites name/stats/text over the full-bleed image at the
+   * layout's positions (see the manifest-level `layout` block).
+   */
+  style?: string;
+  /** Per-card overlay-layout override (see shared/src/overlay.ts). */
+  layout?: unknown;
   rarity?: string;
   /**
    * Is this card part of the basic (free) deck? Defaults by rarity: COMMON
@@ -79,11 +91,16 @@ export interface LocalPack {
   cards: CardDef[];
   /** The freely playable subset — what fills decks without owning NFTs. */
   basicCards: CardDef[];
+  /** The set's overlay-style layout (manifest top-level `layout` block). */
+  layout?: OverlayLayout;
 }
 
 export async function loadLocalPack(): Promise<LocalPack | null> {
   const local = await fetchPack('/pack/pack.json', 'Custom pack', false);
-  if (local) return local;
+  if (local) {
+    setPackOverlayLayout(local.layout ?? null);
+    return local;
+  }
 
   // No local pack: TigerMint pins the pack.json a card set was launched from
   // and serves it byte-for-byte at /api/v1/collections/{slug}/pack.json
@@ -106,8 +123,10 @@ export async function loadLocalPack(): Promise<LocalPack | null> {
       const seen = new Set(merged.cards.map((c) => c.id));
       merged.cards.push(...pack.cards.filter((c) => !seen.has(c.id)));
       merged.basicCards.push(...pack.basicCards.filter((c) => !seen.has(c.id)));
+      merged.layout ??= pack.layout;
     }
   }
+  setPackOverlayLayout(merged?.layout ?? null);
   return merged;
 }
 
@@ -115,7 +134,7 @@ async function fetchPack(url: string, fallbackName: string, remote: boolean): Pr
   try {
     const res = await fetch(url, { cache: 'no-cache' });
     if (!res.ok) return null;
-    const data = (await res.json()) as { name?: string; cards?: PackCardJson[] };
+    const data = (await res.json()) as { name?: string; cards?: PackCardJson[]; layout?: unknown };
     if (!Array.isArray(data.cards)) return null;
     const cards: CardDef[] = [];
     const basicCards: CardDef[] = [];
@@ -126,7 +145,12 @@ async function fetchPack(url: string, fallbackName: string, remote: boolean): Pr
       if (isBasic(raw)) basicCards.push(card);
     });
     if (cards.length === 0) return null;
-    return { name: data.name ?? fallbackName, cards, basicCards };
+    return {
+      name: data.name ?? fallbackName,
+      cards,
+      basicCards,
+      layout: isOverlayLayout(data.layout) ? data.layout : undefined,
+    };
   } catch {
     return null; // no pack there — that's fine, the demo deck covers it
   }
@@ -177,6 +201,13 @@ function toCardDef(raw: PackCardJson, index: number, remote = false): CardDef | 
   if (raw.game && typeof raw.game === 'object' && typeof raw.game.kind === 'string') {
     card.game = raw.game;
   }
+  if (typeof raw.style === 'string') {
+    const s = raw.style.toLowerCase();
+    if (s === 'overlay') card.style = 'overlay';
+    else if (s === 'framed') card.style = 'framed';
+    else if (s.includes('full')) card.style = 'fullArt';
+  }
+  if (isOverlayLayout(raw.layout) && raw.layout) card.layout = raw.layout;
 
   if (type === 'creature') {
     card.attack = clamp(raw.attack ?? 1, 0, 99);

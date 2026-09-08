@@ -134,13 +134,13 @@ maps 1:1:
 | `Cost`, `Attack`, `Health` | The card's numbers |
 | `Skills` (or `Abilities`) | e.g. `"Haste, Armor 2"` — matched against the skill registry by name |
 | `Spell Effect` | e.g. `"damage 3"`, `"aoe damage 2"` — matched against the effect registry |
-| `Card Style` | `framed` or `full art` (see below) |
+| `Card Style` | `framed`, `full art`, or `overlay` (see below) |
 | `Rarity` | Pull-weight tier; tints the deck builder glow |
 
 Filenames never matter for minted NFTs — each item's metadata binds the image
 to its attributes, and that's all the mapper reads.
 
-### Framed vs full-art
+### Three card styles
 
 - **Framed** (default): the system draws the frame, name banner, skill line,
   and stat gems; the NFT image fills the art window.
@@ -148,6 +148,22 @@ to its attributes, and that's all the mapper reads.
   overlaid (cost, current stats) — everything else is your art. Skills come
   **only** from metadata for these cards, so the card always does exactly
   what its art says.
+- **Overlay**: for plain art with no painted-in design — the image renders
+  full-bleed and the system composites the whole text layer over it (name,
+  stats as text or gems, type, description, skills, rarity, league moves) at
+  **assignable static positions**, each with its own font, size, color, and
+  stroke. An optional **scrim** — a colorable alpha-fade gradient on the
+  bottom (or top) half, plain or filled with a tinted pattern
+  (stripes/dots/grid/noise) or a tiled `public/pack/scrim.png` — keeps the
+  text legible on any art. The layout is data, merged in layers: the theme
+  default (`THEME.card.overlay`) ← a pack.json top-level `layout` block
+  (which the TigerMint-served manifest transports, so a card set ships its
+  look) ← per-card overrides. In dev builds, the menu's **🎨 button** opens
+  a live editor: drag elements into place (drops snap to the nearest of
+  nine anchors), restyle everything from a side panel, watch the draft
+  apply to real games, and **Copy JSON** the finished layout into your
+  pack or theme. Small board cards auto-declutter via per-element
+  `hideBelow` thresholds.
 
 Cards are **3:4** — the most common AI-generation aspect ratio — so generated
 art drops in pixel-perfect. Other ratios center-crop, never stretch. Set the
@@ -435,6 +451,7 @@ mutes, remembered per browser.
 | I want to… | Edit |
 | --- | --- |
 | Canvas colors, fonts, glows, foils, badge placement | `client/src/theme.ts` |
+| Overlay-card text layout & scrim | dev 🎨 editor → `layout` in pack.json, or `THEME.card.overlay` |
 | Menu overlay skin (CSS variables) | `client/index.html` |
 | Map my collection's metadata to cards | `client/src/ton/cardMapper.ts` |
 | Add or rename keyword abilities | `shared/src/skills.ts` |

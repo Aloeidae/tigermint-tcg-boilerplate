@@ -9,6 +9,8 @@
  * Lilita One for ALL-CAPS display text, Inter for body, JetBrains Mono for
  * numbers and logs.
  */
+import type { OverlayLayout } from '@tcg/shared';
+
 /** One live badge's placement: an anchor region plus fine-tuning padding. */
 export interface BadgeSpot {
   anchor:
@@ -87,6 +89,53 @@ export const THEME = {
         equip: { anchor: 'topRight', padX: 0.055, padY: 0.055 },
       } as Record<string, BadgeSpot>,
     },
+    /**
+     * The `overlay` card style's DEFAULT layout: full-art image with text
+     * composited over it (see shared/src/overlay.ts for the model). Layers
+     * merge on top of this — a pack.json `layout` block, a per-card
+     * `layout`, and the dev layout editor's draft — so reskins tune here
+     * while card sets ship their own look as data. All pads/wraps are
+     * fractions of card width; text sizes fractions of card height.
+     */
+    overlay: {
+      scrim: {
+        edge: 'bottom', height: 0.48, color: '#000000', alpha: 0.78,
+        fade: 0.45, pattern: 'none',
+      },
+      elements: {
+        name: {
+          anchor: 'topCenter', padY: 0.045, size: 0.062, font: 'display',
+          color: '#fff6e5', stroke: '#000000', strokeThickness: 0.008, upper: true,
+        },
+        type: {
+          anchor: 'topCenter', padY: 0.145, size: 0.034, font: 'body',
+          color: '#fdba74', upper: true, hideBelow: 200,
+        },
+        cost: { anchor: 'topLeft', padX: 0.045, padY: 0.045, render: 'badge' },
+        attack: { anchor: 'bottomLeft', padX: 0.045, padY: 0.045, render: 'badge' },
+        health: { anchor: 'bottomRight', padX: 0.045, padY: 0.045, render: 'badge' },
+        defense: {
+          anchor: 'bottomLeft', padX: 0.06, padY: 0.24, size: 0.038,
+          font: 'body', color: '#9ca3af', bold: true, hideBelow: 200,
+        },
+        skills: {
+          anchor: 'bottomCenter', padY: 0.27, size: 0.038, font: 'body',
+          color: '#fb923c', bold: true, wrap: 0.8, hideBelow: 200,
+        },
+        description: {
+          anchor: 'bottomCenter', padY: 0.115, size: 0.036, font: 'body',
+          color: '#e5e5e5', wrap: 0.82, maxLines: 4, hideBelow: 220,
+        },
+        moves: {
+          anchor: 'bottomCenter', padY: 0.115, size: 0.04, font: 'body',
+          color: '#f5f5f5', wrap: 0.85,
+        },
+        swapCost: {
+          anchor: 'bottomRight', padX: 0.06, padY: 0.24, size: 0.036,
+          font: 'body', color: '#fdba74', bold: true,
+        },
+      },
+    } as OverlayLayout,
     frame: 0x000000,
     face: 0x141414,
     banner: 0x000000,
