@@ -72,9 +72,12 @@ real collection.
   ticking status (Poison, Frozen, Shield), or a token summon in one place and
   cards, metadata, the engine, the AI, and the UI all pick it up; rule
   presets (with mulligans) switch whole game feels from a dropdown.
-- **Two complete rules engines** — the mana/creature game, and a
+- **Three complete rules engines** — the mana/creature game (Mana Clash
+  blockers or Tavern Clash targeted combat with a hero power), a
   Pocket League-TCG-style **League mode** (Active + Bench, energy, evolution,
-  prizes, retreat, weakness/resistance, trainer cards) selectable from the
+  prizes, retreat, weakness/resistance, trainer cards), and **Three Rows**
+  (no mana, three battlefield rows, power totals, best-of-3 rounds decided
+  by passing — spies, weather, horns, scorch) — all selectable from the
   same dropdown — see [section 9](#9-league-mode-build-a-pokémon-style-tcg).
 - **Replays** — the engine is a pure seeded reducer, so a finished game
   downloads as a small JSON file that plays back perfectly.
@@ -345,6 +348,8 @@ presets from `shared/src/rules.ts`:
 | `fatigue` | Empty-deck draw: lose instantly, or take growing damage |
 | `mulligan` | Each player may shuffle back their opening hand once (free redraw) |
 | `combatStyle` | `targeted` (pick each attack's target) or `blockers` (Mana Clash style: attacks aim at the player, the defender declares blockers, unblocked damage goes face) |
+| `heroPower` | `strike` (Tavern Clash) adds a once-per-turn hero power: 2 mana, 1 damage to any creature or the face |
+| `gameMode` | `standard` (all knobs above), `pocket` (League engine, section 9), or `rows` (Three Rows engine, below) |
 
 Add an entry to `RULE_PRESETS` and it appears in the menu. Rules travel
 inside the game state, so the engine, AI, server, and targeting UI always
@@ -401,6 +406,20 @@ Two deliberate simplifications keep the flow one-command-per-action: deck
 searches and "you may…" choices auto-pick a sensible option
 (deterministically — replays stay exact), and opening setup is a single
 drag (your basic goes Active, other basics auto-bench).
+
+### The third engine: Three Rows
+
+Pick **Three Rows** from the same dropdown for a `rules.gameMode: 'rows'`
+match (`packages/shared/src/rows/`): no mana, one card a turn onto three
+battlefield rows (melee / ranged / siege), pass to bank your power total,
+best of three rounds — life is round lives, and a tied round costs both
+players one. Units carry a `rows` block (row, power, `hero`, and
+spy / muster / bond / horn abilities); specials cover the three weathers,
+clear skies, a commander's horn, and scorch. Spies stand on the enemy's
+side and draw you 2 cards; running out of cards passes for you, so card
+economy IS the strategy. `validateRowsDeck()` enforces legality (25 cards,
+≤10 specials) and `buildRowsDemoDeck()` ships a jungle warband demoing
+every mechanic. Full rules in [docs/mechanics.md](docs/mechanics.md).
 
 ## 10. Multiplayer: matchmaking, spectating, reconnects, replays
 
@@ -466,6 +485,8 @@ mutes, remembered per browser.
 | League move/trainer effects (the DSL) | `shared/src/pocket/ops.ts`, `passives.ts` |
 | League Special Conditions | `shared/src/pocket/conditions.ts` |
 | League demo set & starter decks | `shared/src/pocket/demo.ts`, `deck.ts` |
+| Three Rows rules engine | `shared/src/rows/engine.ts`, `power.ts` |
+| Three Rows demo warband & deck rules | `shared/src/rows/demo.ts`, `deck.ts` |
 | Rebalance the demo cards | `shared/src/cards.ts` |
 | Smarter (or dumber) AI | `shared/src/ai.ts` |
 | Which cards are free vs mint-only | `rarity` / `basic` in `pack.json` |

@@ -1,11 +1,15 @@
 import Phaser from 'phaser';
 import {
+  boardRowPower,
+  boardTotalPower,
+  boardUnitPower,
   coversCost,
   creatureHasFlag,
   effectTargetSpec,
   isBasicSticker,
   passiveOps,
   reactionGame,
+  ROW_KINDS,
   statusBlocksAttack,
   statusBlocksSwap,
   stickerGame,
@@ -19,6 +23,7 @@ import {
   type PlayerView,
   type PocketMove,
   type ReactionType,
+  type RowKind,
   type TargetSpec,
 } from '@tcg/shared';
 import type { Connection } from '../net/Connection.js';
@@ -93,6 +98,14 @@ export class GameScene extends Phaser.Scene {
   private get pocket(): boolean {
     return this.view.rules.gameMode === 'pocket';
   }
+
+  /** Three-Rows-style rules? Whole different board — see renderRowsAll. */
+  private get rowsMode(): boolean {
+    return this.view.rules.gameMode === 'rows';
+  }
+
+  /** Rows mode: the rebuilt-each-render battlefield layer. */
+  private rowsLayer: Phaser.GameObjects.Container | null = null;
 
   constructor() {
     super('Game');
@@ -232,6 +245,10 @@ export class GameScene extends Phaser.Scene {
   }
 
   private renderAll(): void {
+    if (this.rowsMode) {
+      this.renderRowsAll();
+      return;
+    }
     const view = this.view;
     const myTurn = view.active === view.myId && !view.gameOver && !view.spectator;
     const mainPhase = view.phase === 'main1' || view.phase === 'main2';
@@ -371,6 +388,179 @@ export class GameScene extends Phaser.Scene {
       ids.add(card.instanceId);
     }
     return ids;
+  }
+
+  // -------------------------------------------------------------- rows mode
+
+  /** Six battlefield bands, top-down: their siege/ranged/melee, then mine. */
+  private rowsBands(): { side: 'opp' | 'me'; kind: RowKind; y: number }[] {
+    const ys = PORTRAIT ? [175, 305, 435, 645, 775, 905] : [152, 254, 356, 468, 570, 672];
+    const kinds: RowKind[] = ['siege', 'ranged', 'melee', 'melee', 'ranged', 'siege'];
+    return ys.map((y, i) => ({ side: i < 3 ? ('opp' as const) : ('me' as const), kind: kinds[i], y }));
+  }
+
+  private rowsBandAt(y: number): { side: 'opp' | 'me'; kind: RowKind } | null {
+    const half = ((PORTRAIT ? 112 : 86) + 12) / 2 + 8;
+    for (const b of this.rowsBands()) {
+      if (Math.abs(y - b.y) <= half) return { side: b.side, kind: b.kind };
+    }
+    return null;
+  }
+
+  private renderRowsAll(): void {
+    const view = this.view;
+    const r = view.rowsRound;
+    if (!r || !view.you.rowsBoard || !view.opponent.rowsBoard) return;
+    const iPassed = r.passed[view.myId];
+    const theyPassed = r.passed[view.opponent.id];
+    const myTurn = view.active === view.myId && !view.gameOver && !view.spectator && !iPassed;
+
+    this.renderRowsBoard();
+    this.hand.render(view.you.hand, {
+      playableIds: myTurn ? new Set(view.you.hand.map((c) => c.instanceId)) : new Set(),
+      deckOrigin: MY_DECK_POS,
+      onDrop: (card, pointer) => this.onRowsDrop(card, pointer),
+      onInspect: (card) => this.inspect(card.def),
+    });
+    this.renderOppHand(view.opponent.handCount);
+
+    const myTotal = boardTotalPower(view.you.rowsBoard, r.weather);
+    const oppTotal = boardTotalPower(view.opponent.rowsBoard, r.weather);
+    const suffix = theyPassed && !view.gameOver ? ' · they passed' : iPassed && !view.gameOver ? ' · you passed' : '';
+    const overrides: import('../objects/Hud.js').HudOverrides = {
+      button: myTurn ? { label: 'Pass ✋', enabled: true } : { label: 'Waiting…', enabled: false },
+      banner: `Round ${r.round} — You ${myTotal} · ${oppTotal} Them${suffix}`,
+    };
+    if (this.concedeArmed) overrides.concedeLabel = 'Really concede?';
+    this.hud.render(view, {
+      onPhaseButton: () => this.onHudButton(),
+      onFaceClick: () => {},
+      onConcede: () => this.onConcede(),
+    }, overrides);
+    this.logText.setText(this.logLines.join('\n'));
+
+    if (view.gameOver && !this.ended) {
+      const won = view.winner === view.myId;
+      this.showEndOverlay(won ? 'Victory!' : 'Defeat', won ? 'You win the match!' : 'Better luck next time.');
+    }
+
+    const defs: CardDef[] = [
+      ...view.you.hand.map((c) => c.def),
+      ...ROW_KINDS.flatMap((k) =>
+        [...view.you.rowsBoard![k], ...view.opponent.rowsBoard![k]].map((u) => u.def)
+      ),
+    ];
+    void ensureArtTextures(this, defs).then((loaded) => {
+      if (loaded && !this.ended) this.renderAll();
+    });
+  }
+
+  private renderRowsBoard(): void {
+    const view = this.view;
+    const r = view.rowsRound!;
+    this.rowsLayer?.destroy(true);
+    const layer = this.add.container(0, 0);
+    this.rowsLayer = layer;
+    const g = this.add.graphics();
+    layer.add(g);
+
+    const cardW = PORTRAIT ? 84 : 64;
+    const cardH = PORTRAIT ? 112 : 86;
+    const bandH = cardH + 12;
+    const bgLeft = PORTRAIT ? 14 : 480;
+    const bgRight = PORTRAIT ? 796 : 1440;
+    const chipX = PORTRAIT ? 52 : 528;
+    const iconX = PORTRAIT ? 760 : 1394;
+    const ICONS: Record<RowKind, string> = { melee: '⚔', ranged: '🏹', siege: '💥' };
+    const WEATHER_ICONS: Record<RowKind, string> = { melee: '❄', ranged: '🌫', siege: '🌧' };
+    const bands = this.rowsBands();
+
+    for (const band of bands) {
+      const board = (band.side === 'me' ? view.you : view.opponent).rowsBoard!;
+      const units = board[band.kind];
+      const wet = r.weather[band.kind];
+
+      g.fillStyle(wet ? 0x27405c : band.side === 'me' ? 0x1d3320 : 0x33231d, wet ? 0.55 : 0.35);
+      g.fillRoundedRect(bgLeft, band.y - bandH / 2, bgRight - bgLeft, bandH, 10);
+
+      const power = boardRowPower(board, r.weather, band.kind);
+      const chip = this.add
+        .text(chipX, band.y, `${ICONS[band.kind]} ${power}`, {
+          fontFamily: THEME.fonts.display, fontSize: PORTRAIT ? '19px' : '21px',
+          color: '#ffffff', stroke: THEME.hud.bannerStroke, strokeThickness: 4,
+        })
+        .setOrigin(0.5);
+      layer.add(chip);
+      if (board.horns[band.kind]) {
+        layer.add(this.add.text(chipX, band.y + bandH / 2 - 10, '📯', { fontSize: '17px' }).setOrigin(0.5));
+      }
+      if (wet) {
+        layer.add(this.add.text(iconX, band.y, WEATHER_ICONS[band.kind], { fontSize: '26px' }).setOrigin(0.5).setAlpha(0.9));
+      }
+
+      const n = units.length;
+      if (n === 0) continue;
+      const cx = (bgLeft + bgRight) / 2 + (PORTRAIT ? 20 : 0);
+      const maxSpan = bgRight - bgLeft - (PORTRAIT ? 150 : 170);
+      const spacing = n > 1 ? Math.min(cardW + 8, maxSpan / (n - 1)) : 0;
+      const startX = cx - (spacing * (n - 1)) / 2;
+      units.forEach((u, j) => {
+        const x = startX + j * spacing;
+        const sprite = new CardSprite(this, x, band.y, cardW, cardH, u.def, {});
+        sprite.setInteractive(
+          new Phaser.Geom.Rectangle(-cardW / 2, -cardH / 2, cardW, cardH),
+          Phaser.Geom.Rectangle.Contains
+        );
+        sprite.on('pointerdown', () => this.inspect(u.def));
+        layer.add(sprite);
+
+        const p = boardUnitPower(board, r.weather, band.kind, u);
+        const base = u.def.rows?.power ?? 0;
+        const color = u.def.rows?.hero ? '#f5c542' : p > base ? '#7ddf6f' : p < base ? '#e5573f' : '#ffffff';
+        const label = this.add
+          .text(x, band.y + cardH / 2 - 4, `${p}`, {
+            fontFamily: THEME.fonts.display, fontSize: PORTRAIT ? '20px' : '18px',
+            color, stroke: '#000000', strokeThickness: 4, fontStyle: 'bold',
+          })
+          .setOrigin(0.5);
+        layer.add(label);
+      });
+    }
+
+    // The battle line between the two sides.
+    const midY = (bands[2].y + bands[3].y) / 2;
+    g.lineStyle(3, 0xffffff, 0.14);
+    g.lineBetween(bgLeft, midY, bgRight, midY);
+  }
+
+  private onRowsDrop(card: CardInstance, pointer: Phaser.Input.Pointer): void {
+    const { worldY: y } = pointer;
+    if (y > BENCH_TOP) return; // dropped back onto the bench: cancel
+    const view = this.view;
+    const block = card.def.rows;
+    if (!block) {
+      this.toast('This card cannot be played under Three Rows rules');
+      return;
+    }
+    if (block.kind === 'unit' && block.row === 'agile') {
+      const band = this.rowsBandAt(y);
+      if (!band || band.kind === 'siege') {
+        this.toast('Drop agile units on a melee or ranged row');
+        return;
+      }
+      this.send({ type: 'playRowsCard', player: view.myId, instanceId: card.instanceId, row: band.kind });
+      return;
+    }
+    if (block.special === 'horn') {
+      const band = this.rowsBandAt(y);
+      if (!band || band.side !== 'me') {
+        this.toast('Drop the horn on one of your rows');
+        return;
+      }
+      this.send({ type: 'playRowsCard', player: view.myId, instanceId: card.instanceId, row: band.kind });
+      return;
+    }
+    this.send({ type: 'playRowsCard', player: view.myId, instanceId: card.instanceId });
   }
 
   // ------------------------------------------------------------ pocket mode
@@ -792,6 +982,10 @@ export class GameScene extends Phaser.Scene {
   /** The one HUD button, contextual per phase (see hudOverrides). */
   private onHudButton(): void {
     const view = this.view;
+    if (this.rowsMode) {
+      this.send({ type: 'pass', player: view.myId });
+      return;
+    }
     if (this.pocket) {
       this.retreatPicking = false;
       this.send({ type: 'endTurn', player: view.myId });
@@ -1155,8 +1349,16 @@ export class GameScene extends Phaser.Scene {
       this.playEventSound(ev);
       switch (ev.type) {
         case 'turnStarted': {
+          // Rows turns flip on every card — a banner per play would be noise.
+          if (this.rowsMode) break;
           const mine = ev.player === view.myId;
           Fx.turnBanner(this, W, H, mine ? 'Your Turn' : "Opponent's Turn", mine ? THEME.hud.bannerActive : THEME.hud.bannerIdle);
+          break;
+        }
+        case 'roundEnded': {
+          const mine = ev.winner === view.myId;
+          const text = ev.winner === null ? 'Round tied' : mine ? 'Round won!' : 'Round lost';
+          Fx.turnBanner(this, W, H, text, mine ? THEME.hud.bannerActive : THEME.hud.bannerIdle);
           break;
         }
         case 'cardPlayed':
@@ -1381,6 +1583,28 @@ export class GameScene extends Phaser.Scene {
         return `${who(ev.player)} is ready`;
       case 'gameOver':
         return `${who(ev.winner)} won: ${ev.reason}`;
+      case 'rowsCardPlayed':
+        return ev.spy
+          ? `${who(ev.player)} planted ${ev.cardName} as a spy`
+          : ev.mustered
+            ? `${ev.cardName} mustered in`
+            : `${who(ev.player)} played ${ev.cardName}`;
+      case 'weatherChanged': {
+        const gripped = [ev.melee && 'melee', ev.ranged && 'ranged', ev.siege && 'siege'].filter(Boolean);
+        return gripped.length > 0
+          ? `Weather grips the ${gripped.join(', ')} row${gripped.length === 1 ? '' : 's'}`
+          : 'The skies clear';
+      }
+      case 'scorched':
+        return ev.cardNames.length > 0 ? `Scorch! ${ev.cardNames.join(', ')} burned` : 'Scorch found nothing to burn';
+      case 'passed':
+        return `${who(ev.player)} passed`;
+      case 'roundEnded':
+        return ev.winner === null
+          ? `Round ${ev.round} tied ${ev.totals[0]}–${ev.totals[1]} — both lose a life`
+          : `${who(ev.winner)} took round ${ev.round} (${ev.totals[ev.winner]}–${ev.totals[ev.winner === 0 ? 1 : 0]})`;
+      case 'roundStarted':
+        return ev.round > 1 ? `— Round ${ev.round} —` : null;
       default:
         return null;
     }

@@ -67,6 +67,9 @@ implementations of that interface.
 | League passive queries (armor, swap cost…) | `shared/src/pocket/passives.ts` |
 | League Special Conditions | `shared/src/pocket/conditions.ts` |
 | League deck legality / starter decks / demo set | `shared/src/pocket/deck.ts`, `demo.ts` |
+| Three Rows mode: rounds, passing, specials | `shared/src/rows/engine.ts` |
+| Three Rows power math (weather/bond/horn) | `shared/src/rows/power.ts` |
+| Three Rows deck legality / demo warband | `shared/src/rows/deck.ts`, `demo.ts` |
 | Spell/equipment effects | `shared/src/effects.ts` |
 | Keyword abilities (skills, triggered hooks) | `shared/src/skills.ts` |
 | Statuses (poison, frozen, shield…) | `shared/src/statuses.ts` |
@@ -163,6 +166,18 @@ arrows (`switchPack` in MenuScene, `#pull-body` slide in index.html).
   `state.rngCursor` — never `Math.random`. Legacy `skills` are stripped from
   board defs in this mode; behavior comes only from the `game` block. Deck
   searches and "you may" choices auto-pick deterministically (no choice UI).
+- A third engine via `rules.gameMode: 'rows'` (Three Rows preset,
+  `shared/src/rows/`): boards live in `PlayerState.rowsBoard` (three
+  RowsUnit arrays + horn flags) and shared round state in
+  `GameState.rowsRound` — the standard `row` array is unused. `life` is
+  round lives; a tied round costs BOTH a life; simultaneous zero tiebreaks
+  on hand size, then deck, then player 1. Cards need a `rows` block. Power
+  is DERIVED, never stored: `boardUnitPower` (weather flattens to 1 → bond
+  multiplies → horn doubles; heroes immune) works from redacted views too —
+  the client's row chips and HUD totals use it. Turn flow is settleTurn():
+  an empty hand auto-passes, both passed resolves the round, the winner
+  leads the next. The client renders it in GameScene.renderRowsAll (six
+  bands, drag-to-row only matters for agile units and the horn special).
 - Pack manifests can come from TigerMint: card sets launched from a
   pack.json are served byte-for-byte at
   `/api/v1/collections/{slug}/pack.json` (public, CORS) — `loadLocalPack()`

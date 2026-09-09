@@ -2,37 +2,53 @@ import type { GameState, PlayerId } from '../types.js';
 import type { RowKind, RowsBoard, RowsUnit } from './types.js';
 import { ROW_KINDS } from './types.js';
 
+type Weather = { melee: boolean; ranged: boolean; siege: boolean };
+const NO_WEATHER: Weather = { melee: false, ranged: false, siege: false };
+
 /**
- * Effective power of one unit, on the board side of `owner` (spies stand on
- * the OPPONENT's side, so owner is the side it scores for, not who played it).
- * Order: weather flattens to 1 → bond multiplies → horn doubles. Heroes
- * ignore all of it.
+ * Effective power of one unit standing on `board` (spies stand on the
+ * OPPONENT's board, so the board is the side it scores for, not who played
+ * it). Order: weather flattens to 1 → bond multiplies → horn doubles.
+ * Heroes ignore all of it. Board-level so client views can compute it too.
  */
-export function unitPower(state: GameState, owner: PlayerId, rowKind: RowKind, unit: RowsUnit): number {
+export function boardUnitPower(board: RowsBoard, weather: Weather, rowKind: RowKind, unit: RowsUnit): number {
   const block = unit.def.rows;
   if (!block || block.kind !== 'unit') return 0;
   const base = block.power ?? 0;
   if (block.hero) return base;
 
-  let p = state.rowsRound?.weather[rowKind] ? Math.min(base, 1) : base;
+  let p = weather[rowKind] ? Math.min(base, 1) : base;
 
-  const board = state.players[owner].rowsBoard;
-  const row = board ? board[rowKind] : [];
+  const row = board[rowKind];
   if (block.ability === 'bond') {
     const copies = row.filter((u) => u.def.id === unit.def.id).length;
     if (copies > 1) p *= copies;
   }
   const horned =
-    (board?.horns[rowKind] ?? false) ||
+    board.horns[rowKind] ||
     row.some((u) => u.instanceId !== unit.instanceId && u.def.rows?.ability === 'horn');
   if (horned) p *= 2;
   return p;
 }
 
+export function boardRowPower(board: RowsBoard, weather: Weather, rowKind: RowKind): number {
+  return board[rowKind].reduce((sum, u) => sum + boardUnitPower(board, weather, rowKind, u), 0);
+}
+
+export function boardTotalPower(board: RowsBoard, weather: Weather): number {
+  return ROW_KINDS.reduce((sum, r) => sum + boardRowPower(board, weather, r), 0);
+}
+
+export function unitPower(state: GameState, owner: PlayerId, rowKind: RowKind, unit: RowsUnit): number {
+  const board = state.players[owner].rowsBoard;
+  if (!board) return 0;
+  return boardUnitPower(board, state.rowsRound?.weather ?? NO_WEATHER, rowKind, unit);
+}
+
 export function rowPower(state: GameState, owner: PlayerId, rowKind: RowKind): number {
   const board = state.players[owner].rowsBoard;
   if (!board) return 0;
-  return board[rowKind].reduce((sum, u) => sum + unitPower(state, owner, rowKind, u), 0);
+  return boardRowPower(board, state.rowsRound?.weather ?? NO_WEATHER, rowKind);
 }
 
 export function totalPower(state: GameState, owner: PlayerId): number {

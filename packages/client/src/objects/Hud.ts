@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import type { PlayerId, PlayerView, Phase } from '@tcg/shared';
+import { boardTotalPower, type PlayerId, type PlayerView, type Phase } from '@tcg/shared';
 import { THEME } from '../theme.js';
 
 export interface HudCallbacks {
@@ -98,7 +98,10 @@ export class Hud {
     // Pocket mode has no mana — that slot shows prize progress instead
     // (the heart doubles as "prizes left to give up").
     const pocket = view.rules.gameMode === 'pocket';
+    // Rows mode has no mana either — that slot shows the side's power total.
+    const rows = view.rules.gameMode === 'rows';
     if (pocket) this.prizeText(L.manaX, L.cy, opp.prizesTaken ?? 0, view.rules.prizes);
+    else if (rows) this.powerText(L.manaX, L.cy, this.rowsTotal(view, opp.rowsBoard));
     else this.manaText(L.manaX, L.cy, opp.mana, opp.maxMana);
     const oppZone = this.scene.add.zone(L.portraitX, L.cy, 84, 84).setOrigin(0.5).setInteractive();
     oppZone.on('pointerdown', () => cb.onFaceClick(opp.id));
@@ -115,6 +118,7 @@ export class Hud {
     this.statChip(g, L.chip1X, py, '⿻', `${me.deckCount}`);
     this.statChip(g, L.chip2X, py, '✝', `${me.graveyardCount}`);
     if (pocket) this.prizeText(L.manaX, py, me.prizesTaken ?? 0, view.rules.prizes, true);
+    else if (rows) this.powerText(L.manaX, py, this.rowsTotal(view, me.rowsBoard), true);
     else this.manaText(L.manaX, py, me.mana, me.maxMana, true);
     const myZone = this.scene.add.zone(L.portraitX, py, 84, 84).setOrigin(0.5).setInteractive();
     myZone.on('pointerdown', () => cb.onFaceClick(me.id));
@@ -274,6 +278,24 @@ export class Hud {
     const t = this.scene.add
       .text(x, y, `${icon} ${value}`, {
         fontFamily: THEME.fonts.body, fontSize: this.compact ? '19px' : '20px', color: THEME.hud.chipText,
+      })
+      .setOrigin(0.5);
+    this.container.add(t);
+  }
+
+  private rowsTotal(view: PlayerView, board: PlayerView['you']['rowsBoard']): number {
+    if (!board || !view.rowsRound) return 0;
+    return boardTotalPower(board, view.rowsRound.weather);
+  }
+
+  /** Rows mode: the side's live power total (the mana slot's tenant). */
+  private powerText(x: number, y: number, total: number, big = false): void {
+    const t = this.scene.add
+      .text(x, y, `⚔ ${total}`, {
+        fontFamily: THEME.fonts.body,
+        fontSize: this.compact ? (big ? '22px' : '19px') : big ? '24px' : '20px',
+        color: THEME.hud.mana,
+        fontStyle: 'bold',
       })
       .setOrigin(0.5);
     this.container.add(t);

@@ -345,7 +345,7 @@ play and not on either player's first turn.
 much attached energy (modifiers: Free-Swap-style traits, swapCostDelta
 Tools/Stadiums, enemy opponentSwapCost taxes).
 
-**Deck legality** (`validatePokemonDeck`): exact deck size, ≥1 basic
+**Deck legality** (`validatePocketDeck`): exact deck size, ≥1 basic
 sticker, max 4 copies by name, basic energy unlimited, ≤4 special energy.
 
 **Balance rules of thumb** (the demo set and the reference generator both
@@ -356,3 +356,40 @@ band per stage; price move text in damage (inflicting a condition ≈ −10 to
 healing 30 or drawing a card ≈ −20). Sanity checks: no basic should
 one-shot a same-tier basic through weakness with a 1-energy move, and every
 stage 2 should die in ≤3 hits to the stage 1 it's weak to.
+
+## Three Rows mode (`rules.gameMode: 'rows'`)
+
+The third engine (`shared/src/rows/`). No mana and no combat phases: players
+alternate playing ONE card from hand onto three battlefield rows — melee,
+ranged, siege — or **pass** to bank their total for the round. When both
+players have passed (running out of cards passes for you), the higher power
+total takes the round; `startingLife` is round lives (2 = best of three), and
+a tied round costs BOTH players a life. Cards never come back between rounds:
+the whole game is fought from the 10-card opening hand plus what spies and
+musters pull in, so winning a round cheap is as important as winning it big.
+
+**Units** (`rows.kind: 'unit'`): a fixed row (or `agile` — melee/ranged, you
+pick), base `power`, optional `hero` (ignores weather, horns, scorch) and one
+ability:
+
+- **spy** — played onto the OPPONENT's matching row (their points!); you draw 2.
+- **muster** — pulls every deck unit sharing its `musterTag` straight into play.
+- **bond** — same-name copies in one row multiply each other (power × copies).
+- **horn** — doubles every OTHER unit in its row.
+
+**Specials** (`rows.kind: 'special'`): `frost`/`fog`/`rain` pin the
+melee/ranged/siege row (both sides) to power 1, `clear` lifts all weather,
+`horn` doubles one of your rows (one per row), `scorch` destroys the
+strongest non-hero unit(s) in play — yours included.
+
+**Power math order**: weather flattens to 1 → bond multiplies → horn doubles.
+Heroes skip all of it.
+
+**Round end**: winner keeps their lives and leads off the next round; boards,
+horns, and weather clear into the graveyards. Losing both lives loses the
+game; if both players hit zero together the tiebreak is cards left in hand,
+then deck, then the second player.
+
+**Deck legality** (`validateRowsDeck`): exact deck size (25), ≤10 specials,
+the rest units. `buildRowsDemoDeck()` ships a worked example of every
+mechanic.

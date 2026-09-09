@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import {
-  buildDemoDeck, buildStarterPocketDeck, DECK_SIZE, DEMO_CATALOG, padDeck,
-  POCKET_DEMO_CARDS, RULE_PRESETS, type CardDef, type RulesConfig,
+  buildDemoDeck, buildRowsDemoDeck, buildStarterPocketDeck, DECK_SIZE, DEMO_CATALOG, padDeck,
+  POCKET_DEMO_CARDS, RULE_PRESETS, validateRowsDeck, type CardDef, type RulesConfig,
 } from '@tcg/shared';
 import { THEME } from '../theme.js';
 import { loadLocalPack, packDeck, type LocalPack } from '../pack.js';
@@ -503,6 +503,13 @@ export class MenuScene extends Phaser.Scene {
    * (local pack + owned NFTs), falling back to the built-in league demo set.
    */
   private gameDeck(): CardDef[] {
+    // Rows (Three Rows) needs cards with a `rows` block; fall back to the
+    // built-in warband unless the available pool makes a legal deck.
+    if (this.rules.gameMode === 'rows') {
+      const pool = [...(this.pack?.cards ?? []), ...this.nftCards].filter((d) => d.rows);
+      const candidate = pool.slice(0, this.rules.deckSize);
+      return validateRowsDeck(candidate, this.rules).ok ? candidate : buildRowsDemoDeck();
+    }
     if (this.rules.gameMode !== 'pocket') return this.deck;
     const pool = [...(this.pack?.cards ?? []), ...this.nftCards].filter((d) => d.game);
     return buildStarterPocketDeck(pool.length > 0 ? pool : POCKET_DEMO_CARDS, this.rules.deckSize);
