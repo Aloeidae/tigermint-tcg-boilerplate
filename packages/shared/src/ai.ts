@@ -66,6 +66,17 @@ export function chooseCommand(state: GameState, me: PlayerId): Command {
       }
     }
 
+    // 4. Spare mana on the hero power: finish a 1-hp creature, else go face.
+    if (state.rules.heroPower === 'strike' && !p.heroPowerUsed && p.mana >= 2) {
+      const finishable = enemy.row.find((c): c is CreatureOnBoard => c !== null && c.health === 1);
+      if (finishable) {
+        return { type: 'heroPower', player: me, target: { kind: 'creature', instanceId: finishable.instanceId } };
+      }
+      if (state.phase === 'main2' || enemy.life <= 1) {
+        return { type: 'heroPower', player: me, target: { kind: 'face' } };
+      }
+    }
+
     return state.phase === 'main1' ? { type: 'advancePhase', player: me } : { type: 'endTurn', player: me };
   }
 

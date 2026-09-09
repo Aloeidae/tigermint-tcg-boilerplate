@@ -309,6 +309,7 @@ export class GameScene extends Phaser.Scene {
       onPhaseButton: () => this.onHudButton(),
       onFaceClick: (player) => this.onFaceClick(player),
       onConcede: () => this.onConcede(),
+      onHeroPower: () => this.onHeroPower(),
     }, this.hudOverrides(myTurn, amDefending));
     this.logText.setText(this.logLines.join('\n'));
 
@@ -802,6 +803,16 @@ export class GameScene extends Phaser.Scene {
       return;
     }
     this.send({ type: 'advancePhase', player: view.myId });
+  }
+
+  /** Hero power (Tavern Clash): finish a 1-hp enemy creature, else go face. */
+  private onHeroPower(): void {
+    const view = this.view;
+    const finishable = view.opponent.row.find((c) => c !== null && c.health === 1);
+    const target = finishable
+      ? { kind: 'creature' as const, instanceId: finishable.instanceId }
+      : { kind: 'face' as const };
+    this.send({ type: 'heroPower', player: view.myId, target });
   }
 
   /** A first tap on Concede arms it; a second within 3 seconds confirms. */
@@ -1342,6 +1353,8 @@ export class GameScene extends Phaser.Scene {
         return `${who(ev.player)} mulliganed ${ev.count} cards`;
       case 'fatigue':
         return `${who(ev.player)} ran out of cards!`;
+      case 'heroPowerUsed':
+        return `${who(ev.player)} used the hero power on ${ev.targetKind === 'face' ? 'the enemy hero' : ev.targetName}`;
       case 'moveUsed':
         return `${ev.cardName} used ${ev.move}`;
       case 'moveFailed':

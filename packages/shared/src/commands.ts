@@ -35,6 +35,8 @@ export type Command =
   | { type: 'endTurn'; player: PlayerId }
   /** Shuffle back the opening hand and redraw (rules.mulligan, first round only). */
   | { type: 'mulligan'; player: PlayerId }
+  /** Tavern Clash (rules.heroPower): once per turn, 2 mana, 1 damage anywhere. */
+  | { type: 'heroPower'; player: PlayerId; target: AttackTarget }
   | { type: 'concede'; player: PlayerId }
   // ---- Pocket game mode (rules.gameMode 'pocket') ----
   /** Setup phase: place the opening Active (and optional Bench basics). Both players send one. */

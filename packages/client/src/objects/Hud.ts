@@ -6,6 +6,8 @@ export interface HudCallbacks {
   onPhaseButton: () => void;
   onFaceClick: (player: PlayerId) => void;
   onConcede: () => void;
+  /** Tavern Clash (rules.heroPower): the ⚡ button next to the phase button. */
+  onHeroPower?: () => void;
 }
 
 const PHASE_LABELS: Record<Phase, string> = {
@@ -153,6 +155,32 @@ export class Hud {
       const btnZone = this.scene.add.zone(bx, by, L.btnW, L.btnH).setOrigin(0.5).setInteractive({ useHandCursor: true });
       btnZone.on('pointerdown', cb.onPhaseButton);
       this.container.add(btnZone);
+    }
+
+    // ----- Hero power (Tavern Clash): a small ⚡ button left of the phase button -----
+    if (view.rules.gameMode === 'standard' && view.rules.heroPower !== 'none' && cb.onHeroPower) {
+      const inMain = view.phase === 'main1' || view.phase === 'combat' || view.phase === 'main2';
+      const hpEnabled = myTurn && inMain && !view.you.heroPowerUsed && view.you.mana >= 2;
+      const hx = bx - L.btnW / 2 - (this.compact ? 44 : 50);
+      const hs = L.btnH;
+      g.fillStyle(hpEnabled ? T.button : T.buttonDisabled, 1);
+      g.fillRoundedRect(hx - hs / 2, by - hs / 2, hs, hs, 14);
+      g.lineStyle(3, hpEnabled ? T.buttonEdge : 0x333333, 1);
+      g.strokeRoundedRect(hx - hs / 2, by - hs / 2, hs, hs, 14);
+      const hpText = this.scene.add
+        .text(hx, by, '⚡2', {
+          fontFamily: THEME.fonts.display,
+          fontSize: `${L.btnFont - 3}px`,
+          color: hpEnabled ? T.buttonText : T.buttonDisabledText,
+          fontStyle: 'bold',
+        })
+        .setOrigin(0.5);
+      this.container.add(hpText);
+      if (hpEnabled) {
+        const hpZone = this.scene.add.zone(hx, by, hs, hs).setOrigin(0.5).setInteractive({ useHandCursor: true });
+        hpZone.on('pointerdown', cb.onHeroPower);
+        this.container.add(hpZone);
+      }
     }
 
     // ----- Concede (two taps: the second tap within 3s confirms) -----

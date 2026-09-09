@@ -169,6 +169,8 @@ export interface PlayerState {
   fatigue: number;
   /** Whether this player has spent their opening-hand mulligan. */
   mulliganUsed: boolean;
+  /** Tavern Clash (rules.heroPower): spent this turn's hero power. */
+  heroPowerUsed?: boolean;
 
   // ---- Pocket mode only ----
   /** Face-down prize cards. Taking the last one wins the game. */
@@ -219,6 +221,8 @@ export interface OpponentView {
   deckCount: number;
   row: (CreatureOnBoard | null)[];
   graveyardCount: number;
+  /** Tavern Clash: spent this turn's hero power. */
+  heroPowerUsed?: boolean;
   /** Pocket mode: face-down prizes left / taken so far. */
   prizeCount?: number;
   prizesTaken?: number;
@@ -237,6 +241,8 @@ export interface SelfView {
   row: (CreatureOnBoard | null)[];
   graveyardCount: number;
   mulliganUsed: boolean;
+  /** Tavern Clash: spent this turn's hero power. */
+  heroPowerUsed?: boolean;
   /** Spectator views only: the hidden hand's size (hand itself is empty). */
   handCount?: number;
   /** Pocket mode: face-down prizes left / taken so far (contents hidden). */

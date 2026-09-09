@@ -1,7 +1,8 @@
 import type { CardDef, CardInstance, CreatureOnBoard, GameState, PlayerId, PlayerState } from './types.js';
 import type { Command } from './commands.js';
 import type { GameEvent } from './events.js';
-import { checkWin, drawCard, endGame, findCreature, other, sweepDeaths } from './helpers.js';
+import { checkWin, damageFace, drawCard, endGame, findCreature, other, sweepDeaths } from './helpers.js';
+import { applyDamage } from './damage.js';
 import { effectTargetSpec, getEffect, isValidTarget } from './effects.js';
 import { resolveAttack, resolveBlocks, toggleAttacker } from './combat.js';
 import { mergeRules, type RulesConfig } from './rules.js';
@@ -117,6 +118,7 @@ function startTurn(state: GameState, player: PlayerId, events: GameEvent[]): voi
   const p = state.players[player];
   p.maxMana = Math.min(p.maxMana + 1, state.rules.manaCap);
   p.mana = p.maxMana;
+  p.heroPowerUsed = false;
   for (const c of p.row) {
     if (c) {
       c.ready = true;
@@ -329,6 +331,36 @@ export function applyCommand(state: GameState, cmd: Command): CommandResult {
 
     case 'endTurn': {
       startTurn(next, other(cmd.player), events);
+      return { ok: true, state: next, events };
+    }
+
+    // ---- Tavern Clash (rules.heroPower) ----
+    case 'heroPower': {
+      if (next.rules.heroPower === 'none') return { ok: false, error: 'These rules have no hero power' };
+      if (next.phase !== 'main1' && next.phase !== 'combat' && next.phase !== 'main2') {
+        return { ok: false, error: 'The hero power can only be used during your turn' };
+      }
+      if (me.heroPowerUsed) return { ok: false, error: 'Hero power already used this turn' };
+      if (me.mana < 2) return { ok: false, error: 'Not enough mana' };
+
+      if (cmd.target.kind === 'creature') {
+        const found = findCreature(next, cmd.target.instanceId);
+        if (!found) return { ok: false, error: 'That creature is gone' };
+        me.mana -= 2;
+        me.heroPowerUsed = true;
+        events.push({
+          type: 'heroPowerUsed', player: cmd.player, targetKind: 'creature',
+          targetId: found.creature.instanceId, targetName: found.creature.def.name,
+        });
+        applyDamage(next, null, found.creature, 1, events);
+      } else {
+        me.mana -= 2;
+        me.heroPowerUsed = true;
+        events.push({ type: 'heroPowerUsed', player: cmd.player, targetKind: 'face' });
+        damageFace(next, other(cmd.player), 1, events);
+      }
+      sweepDeaths(next, events);
+      checkWin(next, events);
       return { ok: true, state: next, events };
     }
 

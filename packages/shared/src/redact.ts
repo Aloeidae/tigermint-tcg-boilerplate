@@ -49,6 +49,7 @@ export function redactFor(state: GameState, player: PlayerId): PlayerView {
       row: structuredClone(me.row),
       graveyardCount: me.graveyard.length,
       mulliganUsed: me.mulliganUsed,
+      heroPowerUsed: me.heroPowerUsed,
       // Prize CONTENTS stay hidden from everyone, including their owner.
       prizeCount: me.prizes?.length,
       prizesTaken: me.prizesTaken,
@@ -65,6 +66,7 @@ export function redactFor(state: GameState, player: PlayerId): PlayerView {
       deckCount: opp.deck.length,
       row: oppRow,
       graveyardCount: opp.graveyard.length,
+      heroPowerUsed: opp.heroPowerUsed,
       prizeCount: opp.prizes?.length,
       prizesTaken: opp.prizesTaken,
       ready: state.setupDone ? state.setupDone[opp.id] : undefined,

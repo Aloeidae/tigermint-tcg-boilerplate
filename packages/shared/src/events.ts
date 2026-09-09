@@ -27,6 +27,8 @@ export type GameEvent =
   | { type: 'lifeChanged'; player: PlayerId; life: number; delta: number }
   | { type: 'mulligan'; player: PlayerId; count: number }
   | { type: 'fatigue'; player: PlayerId }
+  /** Tavern Clash (rules.heroPower): the hero power fired at a creature or the face. */
+  | { type: 'heroPowerUsed'; player: PlayerId; targetKind: 'creature' | 'face'; targetId?: string; targetName?: string }
   | { type: 'gameOver'; winner: PlayerId; reason: string }
   // ---- Pocket game mode ----
   | { type: 'coinFlip'; player: PlayerId; heads: boolean; label?: string }

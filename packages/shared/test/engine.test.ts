@@ -613,3 +613,57 @@ test('venomous poisons what it damages', () => {
   const prey = r.state.players[1].row[0]!;
   assert.ok(prey.statuses.some((st) => st.key === 'poison' && st.value === 1), 'poisoned by the hit');
 });
+
+test('hero power: 2 mana, 1 damage, once per turn, resets next turn', () => {
+  let { state } = createGame({ decks: [fixedDeck(), fixedDeck()], seed: 90, rules: { heroPower: 'strike' } });
+  state = structuredClone(state);
+  state.players[0].mana = 5;
+  state.players[1].row[0] = onBoard(vanilla('tank', 1, 2, 2), 'tank-1');
+
+  let r = applyCommand(state, { type: 'heroPower', player: 0, target: { kind: 'creature', instanceId: 'tank-1' } });
+  assert.ok(r.ok, !r.ok ? r.error : '');
+  assert.equal(r.state.players[0].mana, 3);
+  assert.equal(r.state.players[0].heroPowerUsed, true);
+  assert.equal(r.state.players[1].row[0]!.health, 1);
+  assert.ok(r.events.some((e) => e.type === 'heroPowerUsed' && e.targetKind === 'creature'));
+
+  // Once per turn.
+  const again = applyCommand(r.state, { type: 'heroPower', player: 0, target: { kind: 'face' } });
+  assert.ok(!again.ok);
+
+  // Comes back after a full round.
+  let s = applyCommand(r.state, { type: 'endTurn', player: 0 });
+  assert.ok(s.ok);
+  s = applyCommand(s.state, { type: 'endTurn', player: 1 });
+  assert.ok(s.ok);
+  assert.equal(s.state.players[0].heroPowerUsed, false);
+  const reuse = applyCommand(s.state, { type: 'heroPower', player: 0, target: { kind: 'creature', instanceId: 'tank-1' } });
+  assert.ok(reuse.ok, !reuse.ok ? reuse.error : '');
+  assert.equal(reuse.state.players[1].row[0], null, 'finished off and swept');
+});
+
+test('hero power: face damage can win the game', () => {
+  let { state } = createGame({ decks: [fixedDeck(), fixedDeck()], seed: 91, rules: { heroPower: 'strike' } });
+  state = structuredClone(state);
+  state.players[0].mana = 2;
+  state.players[1].life = 1;
+  const r = applyCommand(state, { type: 'heroPower', player: 0, target: { kind: 'face' } });
+  assert.ok(r.ok, !r.ok ? r.error : '');
+  assert.equal(r.state.players[1].life, 0);
+  assert.equal(r.state.gameOver, true);
+  assert.equal(r.state.winner, 0);
+});
+
+test('hero power: rejected without the rule, without mana, or off-phase', () => {
+  const plain = createGame({ decks: [fixedDeck(), fixedDeck()], seed: 92 }).state;
+  assert.ok(!applyCommand(plain, { type: 'heroPower', player: 0, target: { kind: 'face' } }).ok, 'rules.heroPower off');
+
+  let { state } = createGame({ decks: [fixedDeck(), fixedDeck()], seed: 93, rules: { heroPower: 'strike' } });
+  // Turn 1: only 1 mana.
+  assert.ok(!applyCommand(state, { type: 'heroPower', player: 0, target: { kind: 'face' } }).ok, 'needs 2 mana');
+  state = structuredClone(state);
+  state.players[0].mana = 2;
+  const r = applyCommand(state, { type: 'heroPower', player: 0, target: { kind: 'face' } });
+  assert.ok(r.ok, !r.ok ? r.error : '');
+  assert.equal(r.state.players[1].life, r.state.rules.startingLife - 1);
+});

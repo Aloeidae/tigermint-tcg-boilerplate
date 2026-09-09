@@ -66,6 +66,12 @@ export interface RulesConfig {
   weaknessMultiplier: number;
   /** Pocket mode: resistance subtracts from move damage (−20). */
   resistanceAmount: number;
+  /**
+   * Standard engine only: a once-per-turn hero power (Tavern Clash flavor).
+   * 'strike' costs 2 mana and deals 1 damage to any creature or the face.
+   * Add your own powers by extending the union and the engine's heroPower case.
+   */
+  heroPower: 'none' | 'strike';
 }
 
 export const DEFAULT_RULES: RulesConfig = {
@@ -90,6 +96,7 @@ export const DEFAULT_RULES: RulesConfig = {
   firstTurnNoSupporter: true,
   weaknessMultiplier: 2,
   resistanceAmount: 20,
+  heroPower: 'none',
 };
 
 /**
@@ -144,6 +151,20 @@ export const RULE_PRESETS: Record<string, { label: string; description: string; 
     description: 'The long game: 40 life, fatigue deals growing damage, defenders always strike back, free mulligan.',
     rules: { ...DEFAULT_RULES, startingLife: 40, fatigue: 'damage', mulligan: true },
   },
+  tavern: {
+    label: 'Tavern Clash',
+    description:
+      'Cozy inn brawling: pick every attack target, mana grows to 10, 30 life, empty-deck draws burn you, and a once-per-turn hero power (2 mana: 1 damage anywhere).',
+    rules: {
+      ...DEFAULT_RULES,
+      combatStyle: 'targeted',
+      manaCap: 10,
+      startingLife: 30,
+      fatigue: 'damage',
+      firstPlayerDraws: false,
+      heroPower: 'strike',
+    },
+  },
   league: {
     label: 'Pocket League: Quick',
     description:
@@ -192,5 +213,6 @@ export function mergeRules(partial?: Partial<RulesConfig> | null): RulesConfig {
   r.firstTurnNoSupporter = bool(partial.firstTurnNoSupporter, r.firstTurnNoSupporter);
   r.weaknessMultiplier = num(partial.weaknessMultiplier, 1, 4, r.weaknessMultiplier);
   r.resistanceAmount = num(partial.resistanceAmount, 0, 100, r.resistanceAmount);
+  r.heroPower = partial.heroPower === 'strike' ? 'strike' : partial.heroPower === 'none' ? 'none' : r.heroPower;
   return r;
 }
