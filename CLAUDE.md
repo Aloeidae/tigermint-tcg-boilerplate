@@ -62,11 +62,11 @@ implementations of that interface.
 | Rules knobs / presets (incl. mulligan) | `shared/src/rules.ts` |
 | Turn & phase structure | `shared/src/engine.ts` |
 | Combat resolution (blockers, lanes…) | `shared/src/combat.ts` |
-| League (pokemon) mode: turns, moves, prizes | `shared/src/pokemon/engine.ts` |
-| League effect DSL (move/trainer ops) | `shared/src/pokemon/ops.ts` |
-| League passive queries (armor, swap cost…) | `shared/src/pokemon/passives.ts` |
-| League Special Conditions | `shared/src/pokemon/conditions.ts` |
-| League deck legality / starter decks / demo set | `shared/src/pokemon/deck.ts`, `demo.ts` |
+| League (pocket) mode: turns, moves, prizes | `shared/src/pocket/engine.ts` |
+| League effect DSL (move/trainer ops) | `shared/src/pocket/ops.ts` |
+| League passive queries (armor, swap cost…) | `shared/src/pocket/passives.ts` |
+| League Special Conditions | `shared/src/pocket/conditions.ts` |
+| League deck legality / starter decks / demo set | `shared/src/pocket/deck.ts`, `demo.ts` |
 | Spell/equipment effects | `shared/src/effects.ts` |
 | Keyword abilities (skills, triggered hooks) | `shared/src/skills.ts` |
 | Statuses (poison, frozen, shield…) | `shared/src/statuses.ts` |
@@ -100,7 +100,7 @@ implementations of that interface.
 `effect: { key, amount }` for spells, `art` (URL or texture key), and
 `fullArt` (the image IS the card; only live badges are overlaid). Equipment
 `skills` are granted to the wearer while attached. An optional `game` block
-(`shared/src/pokemon/types.ts`) carries the card's League-mode definition
+(`shared/src/pocket/types.ts`) carries the card's League-mode definition
 (stage/HP/type/trait/moves/weakness/retreat, or trainer/energy data); the
 legacy fields keep the same card playable under the standard engine.
 
@@ -148,16 +148,16 @@ arrows (`switchPack` in MenuScene, `#pull-body` slide in index.html).
 - Phaser pauses its loop when `document.hidden` — tweens freeze and queued
   clicks wait. In automated browser tests this masquerades as bugs.
 - Two combat systems via `rules.combatStyle`: 'targeted' (attacker picks
-  targets, Guard restricts) and 'blockers' (MTG-style: declare attackers ->
+  targets, Guard restricts) and 'blockers' (Mana Clash style: declare attackers ->
   'block' phase where the DEFENDER acts -> resolve; `declareBlockers` is the
   one command legal from the non-active player besides concede/mulligan;
   `actingPlayer()` in ai.ts tells whose decision the game waits on).
-- A second FULL rules engine via `rules.gameMode: 'pokemon'` (League presets,
-  `shared/src/pokemon/`): row[0] is the Active, the rest the Bench (+1 slot
+- A second FULL rules engine via `rules.gameMode: 'pocket'` (League presets,
+  `shared/src/pocket/`): row[0] is the Active, the rest the Bench (+1 slot
   of headroom for Stadium bench bonuses); `life` mirrors prizes remaining;
   the `setup` phase and `promote`-after-knockout accept commands from the
   non-active player (`actingPlayer()` knows). Special Conditions tick
-  BETWEEN turns inside the pokemon engine (not via tickStatuses); condition
+  BETWEEN turns inside the pocket engine (not via tickStatuses); condition
   and self damage use `placeDamage` (bypasses W/R and armor, like damage
   counters), only move damage goes through damage.ts. Coin flips advance
   `state.rngCursor` — never `Math.random`. Legacy `skills` are stripped from

@@ -16,7 +16,7 @@ import { attachEnergyCard, evolveInto, exchangeActive, runOps, runTraitTrigger, 
 import './conditions.js';
 
 /**
- * The Pokémon-TCG-style rules engine (rules.gameMode 'pokemon').
+ * The Pocket League-TCG-style rules engine (rules.gameMode 'pocket').
  *
  * Board mapping: row[0] is the ACTIVE sticker, row[1..] the BENCH. `life`
  * mirrors prizes remaining so the standard HUD heart stays meaningful.
@@ -26,7 +26,7 @@ import './conditions.js';
  */
 
 /** Called by createGame instead of the standard opening. */
-export function initPokemonGame(state: GameState, events: GameEvent[], rng: () => number): void {
+export function initPocketGame(state: GameState, events: GameEvent[], rng: () => number): void {
   state.phase = 'setup';
   state.setupDone = [false, false];
   state.pendingPromote = null;
@@ -231,7 +231,7 @@ function extraAttachAllowed(state: GameState, player: PlayerId, target: Creature
 }
 
 /** Everything below runs on a fresh clone; concede is handled by the caller. */
-export function applyPokemonCommand(state: GameState, cmd: Command): CommandResult {
+export function applyPocketCommand(state: GameState, cmd: Command): CommandResult {
   // ---- Setup phase: both players place an opening board ----
   if (cmd.type === 'setup') {
     if (state.phase !== 'setup') return { ok: false, error: 'The game is already set up' };

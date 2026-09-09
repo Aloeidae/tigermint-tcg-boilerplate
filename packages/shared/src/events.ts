@@ -28,7 +28,7 @@ export type GameEvent =
   | { type: 'mulligan'; player: PlayerId; count: number }
   | { type: 'fatigue'; player: PlayerId }
   | { type: 'gameOver'; winner: PlayerId; reason: string }
-  // ---- Pokemon game mode ----
+  // ---- Pocket game mode ----
   | { type: 'coinFlip'; player: PlayerId; heads: boolean; label?: string }
   | { type: 'energyAttached'; player: PlayerId; targetInstanceId: string; cardName: string; targetName: string }
   | { type: 'energyDiscarded'; player: PlayerId; instanceId: string; count: number }

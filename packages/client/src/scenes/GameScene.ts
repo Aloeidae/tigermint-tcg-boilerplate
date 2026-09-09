@@ -17,7 +17,7 @@ import {
   type EffectTarget,
   type GameEvent,
   type PlayerView,
-  type PokemonMove,
+  type PocketMove,
   type ReactionType,
   type TargetSpec,
 } from '@tcg/shared';
@@ -84,14 +84,14 @@ export class GameScene extends Phaser.Scene {
   /** Two-tap concede confirmation. */
   private concedeArmed = false;
   private concedeTimer: ReturnType<typeof setTimeout> | null = null;
-  /** Pokemon mode: picking a Bench sticker to retreat into. */
+  /** Pocket mode: picking a Bench sticker to retreat into. */
   private retreatPicking = false;
-  /** Pokemon mode: the sticker action menu (moves / retreat / trait). */
+  /** Pocket mode: the sticker action menu (moves / retreat / trait). */
   private stickerMenu: Phaser.GameObjects.GameObject[] = [];
 
-  /** Pokemon-TCG-style rules (League presets)? Changes every interaction. */
-  private get pokemon(): boolean {
-    return this.view.rules.gameMode === 'pokemon';
+  /** Pocket-TCG-style rules (League presets)? Changes every interaction. */
+  private get pocket(): boolean {
+    return this.view.rules.gameMode === 'pocket';
   }
 
   constructor() {
@@ -113,13 +113,13 @@ export class GameScene extends Phaser.Scene {
     this.input.dragDistanceThreshold = 8;
 
     // Creation order fixes the z-order: rows < log < hud < hand < arrow.
-    // (Pokemon rows carry a Bench-headroom slot, so size from the view.)
+    // (Pocket rows carry a Bench-headroom slot, so size from the view.)
     const slots = Math.max(this.view.you.row.length, this.view.rules.maxRow);
     this.oppRow = new RowLayout(this, W / 2, OPP_ROW_Y, slots, ROW_CARD.w, ROW_CARD.h, ROW_CARD.spacing, ROW_CARD.cols, ROW_CARD.rowGap);
     this.myRow = new RowLayout(this, W / 2, MY_ROW_Y, slots, ROW_CARD.w, ROW_CARD.h, ROW_CARD.spacing, ROW_CARD.cols, ROW_CARD.rowGap);
-    // Pokemon mode: slot 0 is the Active spot — flag it (landscape only; the
+    // Pocket mode: slot 0 is the Active spot — flag it (landscape only; the
     // portrait grid is too tight for labels, position + glow carry it there).
-    if (this.view.rules.gameMode === 'pokemon' && !PORTRAIT) {
+    if (this.view.rules.gameMode === 'pocket' && !PORTRAIT) {
       const label = (row: RowLayout, dy: number): void => {
         this.add
           .text(row.slotX(0), row.slotY(0) + dy, '⭐ ACTIVE', {
@@ -246,14 +246,14 @@ export class GameScene extends Phaser.Scene {
 
     if (this.selectedAttacker && !this.findMyCreature(this.selectedAttacker)) this.deselect();
 
-    const pokemon = this.pokemon;
-    const settingUp = pokemon && view.phase === 'setup' && !view.you.ready && !view.spectator;
-    const promoting = pokemon && view.pendingPromote === view.myId && !view.spectator && !view.gameOver;
+    const pocket = this.pocket;
+    const settingUp = pocket && view.phase === 'setup' && !view.you.ready && !view.spectator;
+    const promoting = pocket && view.pendingPromote === view.myId && !view.spectator && !view.gameOver;
 
     // Attackers that may still act glow; spent ones dim.
     const glowIds = new Set<string>();
     const dimIds = new Set<string>();
-    if (pokemon) {
+    if (pocket) {
       // Promotion / retreat: the Bench choices glow. Otherwise: the Active
       // glows on my turn when at least one move is affordable.
       if (promoting || this.retreatPicking) {
@@ -284,8 +284,8 @@ export class GameScene extends Phaser.Scene {
       glowIds,
       dimIds,
       // Blockers mode declares by tapping; only targeted mode drags attacks.
-      // Pokemon mode is all taps too — the Active opens its action menu.
-      draggableIds: blockers || pokemon ? new Set() : glowIds,
+      // Pocket mode is all taps too — the Active opens its action menu.
+      draggableIds: blockers || pocket ? new Set() : glowIds,
       onCreatureClick: (id) => this.onMyCreatureClick(id),
       onCreatureDragStart: (id, sprite) => {
         this.selectedAttacker = id;
@@ -350,7 +350,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   private computePlayable(): Set<string> {
-    if (this.pokemon) return this.computePokemonPlayable();
+    if (this.pocket) return this.computePocketPlayable();
     const view = this.view;
     const ids = new Set<string>();
     const myCreatures = view.you.row.some((c) => c !== null);
@@ -372,10 +372,10 @@ export class GameScene extends Phaser.Scene {
     return ids;
   }
 
-  // ------------------------------------------------------------ pokemon mode
+  // ------------------------------------------------------------ pocket mode
 
   /** Hand cards worth lighting up under League rules (engine re-validates). */
-  private computePokemonPlayable(): Set<string> {
+  private computePocketPlayable(): Set<string> {
     const view = this.view;
     const ids = new Set<string>();
     if (view.phase === 'setup') {
@@ -423,7 +423,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   /** The Active's moves whose energy cost is currently covered. */
-  private affordableMoves(creature: CreatureOnBoard): { move: PokemonMove; index: number }[] {
+  private affordableMoves(creature: CreatureOnBoard): { move: PocketMove; index: number }[] {
     const game = stickerGame(creature.def);
     if (!game) return [];
     if (this.view.rules.firstTurnNoAttack && this.view.turn === 1) return [];
@@ -436,7 +436,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   /** Drops under League rules: bench, evolve, attach, trainers, setup. */
-  private resolvePokemonDrop(card: CardInstance, x: number, y: number): Command | null {
+  private resolvePocketDrop(card: CardInstance, x: number, y: number): Command | null {
     const view = this.view;
     const me = view.myId;
     const def = card.def;
@@ -494,7 +494,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   /** Taps on my own stickers under League rules. */
-  private onPokemonCreatureClick(id: string): void {
+  private onPocketCreatureClick(id: string): void {
     const view = this.view;
     const creature = this.findMyCreature(id);
     if (!creature) return;
@@ -639,7 +639,7 @@ export class GameScene extends Phaser.Scene {
     const friendly = THEME.fx.glowFriendly;
     const enemy = THEME.fx.glowEnemy;
 
-    if (this.pokemon) {
+    if (this.pocket) {
       const sticker = stickerGame(def);
       if (sticker && sticker.stageIndex > 0) {
         // Evolution: light up the stages it can land on.
@@ -723,7 +723,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   private resolveDrop(card: CardInstance, x: number, y: number): Command | null {
-    if (this.pokemon) return this.resolvePokemonDrop(card, x, y);
+    if (this.pocket) return this.resolvePocketDrop(card, x, y);
     const view = this.view;
     const me = view.myId;
     const def = card.def;
@@ -791,7 +791,7 @@ export class GameScene extends Phaser.Scene {
   /** The one HUD button, contextual per phase (see hudOverrides). */
   private onHudButton(): void {
     const view = this.view;
-    if (this.pokemon) {
+    if (this.pocket) {
       this.retreatPicking = false;
       this.send({ type: 'endTurn', player: view.myId });
       return;
@@ -828,7 +828,7 @@ export class GameScene extends Phaser.Scene {
     const overrides: import('../objects/Hud.js').HudOverrides = {};
     if (this.concedeArmed) overrides.concedeLabel = 'Really concede?';
 
-    if (this.pokemon) {
+    if (this.pocket) {
       if (view.phase === 'setup') {
         overrides.button = { label: 'Waiting…', enabled: false };
         overrides.banner = view.you.ready
@@ -887,12 +887,12 @@ export class GameScene extends Phaser.Scene {
 
   private onMyCreatureClick(id: string): void {
     const view = this.view;
-    if (this.pokemon) {
+    if (this.pocket) {
       if (view.spectator || view.gameOver) {
         const c = this.findMyCreature(id);
         if (c) this.inspect(c.def, c);
       } else {
-        this.onPokemonCreatureClick(id);
+        this.onPocketCreatureClick(id);
       }
       return;
     }
@@ -968,7 +968,7 @@ export class GameScene extends Phaser.Scene {
 
   private onEnemyCreatureClick(id: string): void {
     const view = this.view;
-    if (this.pokemon) {
+    if (this.pocket) {
       const creature = view.opponent.row.find((c) => c?.instanceId === id);
       if (creature) this.inspect(creature.def, creature);
       return;
@@ -1002,7 +1002,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   private onFaceClick(player: number): void {
-    if (this.pokemon) return; // no face attacks under League rules
+    if (this.pocket) return; // no face attacks under League rules
     if (!this.selectedAttacker) return;
     if (player === this.view.myId) return this.deselect();
     if (!this.canAttackFace()) {
@@ -1111,7 +1111,7 @@ export class GameScene extends Phaser.Scene {
       case 'gameOver':
         playSound(ev.winner === this.view.myId ? 'victory' : 'defeat');
         break;
-      // ---- pokemon mode ----
+      // ---- pocket mode ----
       case 'moveUsed':
         playSound('attack');
         break;
@@ -1247,7 +1247,7 @@ export class GameScene extends Phaser.Scene {
           if (pos) Fx.impact(this, pos.x, pos.y, THEME.fx.glowFriendly);
           break;
         }
-        // ---- pokemon mode ----
+        // ---- pocket mode ----
         case 'moveUsed': {
           const from = creaturePos(ev.instanceId);
           const defender = ev.player === view.myId ? view.opponent.row[0] : view.you.row[0];

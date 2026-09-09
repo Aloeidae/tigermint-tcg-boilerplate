@@ -171,7 +171,7 @@ function skillsFor(nft: NftItem, h: number, type: 'creature' | 'equipment', full
 }
 
 /**
- * Give an NFT card its pokemon-mode definition by matching it against the
+ * Give an NFT card its pocket-mode definition by matching it against the
  * pack manifest (local, or served by TigerMint per slug — either way the
  * generator's pack.json carries a full `game` block per card). The minted
  * "Card ID" trait is the stable key; card name (a "Card Name" trait survives

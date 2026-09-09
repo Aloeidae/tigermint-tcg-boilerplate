@@ -72,8 +72,8 @@ interface PackCardJson {
   editions?: number;
   copies?: number;
   /**
-   * Pokemon-mode definition (League presets) — passed through verbatim.
-   * The card-set generator writes these; see shared/src/pokemon/types.ts.
+   * Pocket-mode definition (League presets) — passed through verbatim.
+   * The card-set generator writes these; see shared/src/pocket/types.ts.
    */
   game?: GameBlock;
   /**
@@ -218,7 +218,7 @@ function toCardDef(raw: PackCardJson, index: number, remote = false): CardDef | 
   } else {
     card.effect = parseEffect(raw.effect);
     // A spell with no standard effect can't be played in standard mode, but a
-    // pokemon-only card (energy without a legacy mapping) is still welcome.
+    // pocket-only card (energy without a legacy mapping) is still welcome.
     if (!card.effect && !card.game) return null;
   }
   return card;

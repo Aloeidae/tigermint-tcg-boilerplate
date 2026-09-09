@@ -3,7 +3,7 @@ import type { GameEvent } from './events.js';
 import { applyStatus } from './statuses.js';
 
 /**
- * The skill (keyword) registry — modular MTG-style abilities like Haste,
+ * The skill (keyword) registry — modular keyword abilities like Haste,
  * First Strike, Guard. THE second big extension point of this boilerplate
  * (alongside effects.ts).
  *

@@ -22,7 +22,7 @@ export function redactForSpectator(state: GameState): PlayerView {
 export function redactFor(state: GameState, player: PlayerId): PlayerView {
   const me = state.players[player];
   const opp = state.players[other(player)];
-  // Pokemon setup: the opponent's opening placement stays face-down until
+  // Pocket setup: the opponent's opening placement stays face-down until
   // both players are ready — send them an empty row.
   const setupPhase = state.phase === 'setup';
   const oppRow = setupPhase ? opp.row.map(() => null) : structuredClone(opp.row);

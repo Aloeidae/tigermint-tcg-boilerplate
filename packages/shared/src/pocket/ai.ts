@@ -2,7 +2,7 @@ import type { CardInstance, CreatureOnBoard, GameState, PlayerId } from '../type
 import type { Command } from '../commands.js';
 import { other } from '../helpers.js';
 import { statusBlocksAttack, statusBlocksSwap } from '../statuses.js';
-import type { PokemonMove, ReactionType } from './types.js';
+import type { PocketMove, ReactionType } from './types.js';
 import { coversCost, isBasicSticker, reactionGame, stickerGame, trainerGame } from './types.js';
 import { benchStickers } from './board.js';
 import { effectiveBenchSize, effectiveSwapCost, hasOp, allPassives } from './passives.js';
@@ -13,7 +13,7 @@ import { effectiveBenchSize, effectiveSwapCost, hasOp, allPassives } from './pas
  * hardest-hitting affordable move (weakness-aware). One command per call,
  * like the standard AI — swap this file out for something smarter.
  */
-export function choosePokemonCommand(state: GameState, me: PlayerId): Command {
+export function choosePocketCommand(state: GameState, me: PlayerId): Command {
   const p = state.players[me];
 
   if (state.phase === 'setup') {
@@ -150,7 +150,7 @@ function score(c: CreatureOnBoard): number {
   return c.health + (c.reactions?.length ?? 0) * 40;
 }
 
-function covered(creature: CreatureOnBoard, move: PokemonMove): boolean {
+function covered(creature: CreatureOnBoard, move: PocketMove): boolean {
   const g = stickerGame(creature.def);
   const attached = (creature.reactions ?? []).map((r) => reactionGame(r.def) ?? { type: 'Neutral' as ReactionType });
   return !!g && coversCost(attached, move.cost, g.type);

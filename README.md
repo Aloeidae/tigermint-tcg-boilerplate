@@ -21,7 +21,7 @@ spells, and selectable rule sets.
 6. [Minting on TigerMint](#6-minting-on-tigermint)
 7. [In-game pulls](#7-in-game-pulls)
 8. [Skills, statuses, effects, and rules](#8-skills-statuses-effects-and-rules)
-9. [League mode: build a Pokémon-style TCG](#9-league-mode-build-a-pokémon-style-tcg)
+9. [League mode: build a Pocket-League-style TCG](#9-league-mode-build-a-pokémon-style-tcg)
 10. [Multiplayer: matchmaking, spectating, reconnects, replays](#10-multiplayer-matchmaking-spectating-reconnects-replays)
 11. [Skinning & sound](#11-skinning--sound)
 12. [Make it yours](#12-make-it-yours)
@@ -73,7 +73,7 @@ real collection.
   cards, metadata, the engine, the AI, and the UI all pick it up; rule
   presets (with mulligans) switch whole game feels from a dropdown.
 - **Two complete rules engines** — the mana/creature game, and a
-  Pokémon-TCG-style **League mode** (Active + Bench, energy, evolution,
+  Pocket League-TCG-style **League mode** (Active + Bench, energy, evolution,
   prizes, retreat, weakness/resistance, trainer cards) selectable from the
   same dropdown — see [section 9](#9-league-mode-build-a-pokémon-style-tcg).
 - **Replays** — the engine is a pure seeded reducer, so a finished game
@@ -344,26 +344,26 @@ presets from `shared/src/rules.ts`:
 | `retaliation` | Do defenders strike back? |
 | `fatigue` | Empty-deck draw: lose instantly, or take growing damage |
 | `mulligan` | Each player may shuffle back their opening hand once (free redraw) |
-| `combatStyle` | `targeted` (pick each attack's target) or `blockers` (MTG-style: attacks aim at the player, the defender declares blockers, unblocked damage goes face) |
+| `combatStyle` | `targeted` (pick each attack's target) or `blockers` (Mana Clash style: attacks aim at the player, the defender declares blockers, unblocked damage goes face) |
 
 Add an entry to `RULE_PRESETS` and it appears in the menu. Rules travel
 inside the game state, so the engine, AI, server, and targeting UI always
 agree.
 
-## 9. League mode: build a Pokémon-style TCG
+## 9. League mode: build a Pocket-League-style TCG
 
 The boilerplate ships a **second complete rules engine**. Pick **League
 Quick** or **League Standard** from the Rules dropdown and the game becomes a
-Pokémon-TCG-style battler: one **Active** sticker and a **Bench**, HP with
+Pocket League-TCG-style battler: one **Active** sticker and a **Bench**, HP with
 damage counters, an **energy** attachment per turn, **evolution** lines,
 **retreat**, face-down **prizes** (take your last one to win), weakness ×2 /
 resistance −20, Special Conditions that tick between turns, and
 Item/Supporter/Stadium/Tool trainer cards. Everything else — PvP, matchmaking,
 spectating, reconnects, replays, pulls, the Mini App — works unchanged.
 
-**How it's built** (`packages/shared/src/pokemon/`):
+**How it's built** (`packages/shared/src/pocket/`):
 
-- `rules.gameMode: 'pokemon'` routes `applyCommand` to the league engine;
+- `rules.gameMode: 'pocket'` routes `applyCommand` to the league engine;
   the standard engine is untouched. Slot 0 of the row is the Active, the
   rest the Bench.
 - Cards opt in through a **`game` block** on `CardDef` — the whole card
@@ -372,17 +372,17 @@ spectating, reconnects, replays, pulls, the Mini App — works unchanged.
   same card playable under the standard engine, so one pack serves both.
 - Move text and trainer cards are **data, not code**: each entry in a card's
   `effects` array names an op in the effect-DSL interpreter
-  (`pokemon/ops.ts` — `registerOp()` adds your own). Passive ops (armor,
+  (`pocket/ops.ts` — `registerOp()` adds your own). Passive ops (armor,
   noWeakness, swap-cost modifiers, bench immunity…) are queried by the
-  engine where they matter (`pokemon/passives.ts`).
+  engine where they matter (`pocket/passives.ts`).
 - Special Conditions (poison/burn/sleep/paralysis/confusion flavors) are
   entries in the shared **status registry**, so the client renders them with
   zero extra wiring; rename them for your skin with `configureStatus()`.
 - Coin flips are **seed-deterministic** (`state.rngCursor`), so replays and
   the PvP server reproduce every flip exactly.
-- `validatePokemonDeck()` enforces deck legality (exact size, ≥1 basic,
+- `validatePocketDeck()` enforces deck legality (exact size, ≥1 basic,
   4-copy cap, unlimited basic energy, ≤4 special energy);
-  `buildStarterPokemonDeck()` assembles a playable starter from any pool.
+  `buildStarterPocketDeck()` assembles a playable starter from any pool.
 
 **Content pipeline:** a league card set is just a `pack.json` whose cards
 carry `game` blocks — drop one into `packages/client/public/pack/` and the
@@ -394,7 +394,7 @@ manifest at launch, and serves it at
 the game fetches the full card set from TigerMint when no local pack ships,
 and owned NFTs match back to their rules by the minted `Card ID` trait
 (name/id fallbacks). No pack anywhere? A built-in demo set
-(`pokemon/demo.ts`) plays out of the box — it doubles as a worked example of
+(`pocket/demo.ts`) plays out of the box — it doubles as a worked example of
 every mechanic.
 
 Two deliberate simplifications keep the flow one-command-per-action: deck
@@ -462,10 +462,10 @@ mutes, remembered per browser.
 | Tune or add rules presets | `shared/src/rules.ts` |
 | Change combat (blockers, lanes…) | `shared/src/combat.ts` |
 | Change turn/phase structure | `shared/src/engine.ts` |
-| League (Pokémon-style) rules engine | `shared/src/pokemon/engine.ts` |
-| League move/trainer effects (the DSL) | `shared/src/pokemon/ops.ts`, `passives.ts` |
-| League Special Conditions | `shared/src/pokemon/conditions.ts` |
-| League demo set & starter decks | `shared/src/pokemon/demo.ts`, `deck.ts` |
+| League (Pocket-League-style) rules engine | `shared/src/pocket/engine.ts` |
+| League move/trainer effects (the DSL) | `shared/src/pocket/ops.ts`, `passives.ts` |
+| League Special Conditions | `shared/src/pocket/conditions.ts` |
+| League demo set & starter decks | `shared/src/pocket/demo.ts`, `deck.ts` |
 | Rebalance the demo cards | `shared/src/cards.ts` |
 | Smarter (or dumber) AI | `shared/src/ai.ts` |
 | Which cards are free vs mint-only | `rarity` / `basic` in `pack.json` |

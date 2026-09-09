@@ -1,13 +1,13 @@
 import { registerStatus } from '../statuses.js';
 
 /**
- * Pokemon-mode Special Conditions and utility statuses, registered in the
+ * Pocket-mode Special Conditions and utility statuses, registered in the
  * shared statuses registry so the client renders their icons and text with
  * zero extra wiring. Only the ACTIVE sticker can hold a Special Condition;
  * retreating or evolving clears them (the engine enforces both).
  *
  * The between-turns behavior (poison ticks, burn/sleep cure flips) lives in
- * pokemon/engine.ts — it needs the deterministic coin flip and must ignore
+ * pocket/engine.ts — it needs the deterministic coin flip and must ignore
  * weakness/resistance, which generic status hooks can't express. Rename any
  * of these for your skin with configureStatus() — the generator data matches
  * by name OR key, so "Spammed" and "Poisoned" both resolve here.

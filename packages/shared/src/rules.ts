@@ -13,7 +13,7 @@ export interface RulesConfig {
   maxHand: number;
   maxRow: number;
   manaCap: number;
-  /** Does the player who goes first also draw on turn 1? (MTG: no) */
+  /** Does the player who goes first also draw on turn 1? (Mana Clash: no) */
   firstPlayerDraws: boolean;
   /** Creatures can't attack the turn they are summoned. */
   summoningSickness: boolean;
@@ -27,8 +27,8 @@ export interface RulesConfig {
   /** Defending creatures strike back when attacked. */
   retaliation: boolean;
   /**
-   * Drawing from an empty deck: 'lose' the game instantly (MTG-style), or
-   * take 'damage' that grows by 1 with every empty draw (Hearthstone-style).
+   * Drawing from an empty deck: 'lose' the game instantly (Mana Clash), or
+   * take 'damage' that grows by 1 with every empty draw (Tavern Clash).
    */
   fatigue: 'lose' | 'damage';
   /**
@@ -39,32 +39,32 @@ export interface RulesConfig {
   /**
    * How combat works.
    * 'targeted': the attacker picks each attack's target — an enemy creature
-   *   or the face (Hearthstone-style).
-   * 'blockers': MTG-style — attacks are declared against the PLAYER, the
-   *   defender assigns blockers, blocked attackers fight their blocker and
+   *   or the face (Tavern Clash style).
+   * 'blockers': Mana Clash style — attacks are declared against the PLAYER,
+   *   the defender assigns blockers, blocked attackers fight their blocker and
    *   unblocked ones hit the face. Attackers never choose creature targets.
    */
   combatStyle: 'targeted' | 'blockers';
   /**
    * Which engine runs the game.
    * 'standard': the mana/creature engine above (all knobs apply).
-   * 'pokemon': Pokémon-TCG-style rules (pokemon/engine.ts) — Active + Bench,
+   * 'pocket': Pocket League-TCG-style rules (pocket/engine.ts) — Active + Bench,
    *   energy attachment, prizes, evolution, retreat, weakness/resistance.
    *   Cards need a `game` block; mana, combatStyle, and the standard combat
    *   knobs are ignored. Slot 0 of the row is the Active, the rest the Bench.
    */
-  gameMode: 'standard' | 'pokemon';
-  /** Pokemon mode: prize cards per player (take the last one to win). */
+  gameMode: 'standard' | 'pocket';
+  /** Pocket mode: prize cards per player (take the last one to win). */
   prizes: number;
-  /** Pokemon mode: prizes awarded for knocking out a star sticker. */
+  /** Pocket mode: prizes awarded for knocking out a star sticker. */
   starPrizes: number;
-  /** Pokemon mode: the first player cannot attack on turn 1. */
+  /** Pocket mode: the first player cannot attack on turn 1. */
   firstTurnNoAttack: boolean;
-  /** Pokemon mode: the first player cannot play a Supporter on turn 1. */
+  /** Pocket mode: the first player cannot play a Supporter on turn 1. */
   firstTurnNoSupporter: boolean;
-  /** Pokemon mode: weakness multiplies move damage (×2). */
+  /** Pocket mode: weakness multiplies move damage (×2). */
   weaknessMultiplier: number;
-  /** Pokemon mode: resistance subtracts from move damage (−20). */
+  /** Pocket mode: resistance subtracts from move damage (−20). */
   resistanceAmount: number;
 }
 
@@ -93,12 +93,12 @@ export const DEFAULT_RULES: RulesConfig = {
 };
 
 /**
- * Pokemon-mode baselines. `maxRow` is 1 Active + the Bench; the row array
+ * Pocket-mode baselines. `maxRow` is 1 Active + the Bench; the row array
  * gets one slot of headroom so a benchSize +1 Stadium (Megagroup) fits.
  */
-export const POKEMON_STANDARD: RulesConfig = {
+export const POCKET_STANDARD: RulesConfig = {
   ...DEFAULT_RULES,
-  gameMode: 'pokemon',
+  gameMode: 'pocket',
   deckSize: 60,
   openingHand: 7,
   maxHand: 99,
@@ -108,8 +108,8 @@ export const POKEMON_STANDARD: RulesConfig = {
   fatigue: 'lose',
 };
 
-export const POKEMON_QUICK: RulesConfig = {
-  ...POKEMON_STANDARD,
+export const POCKET_QUICK: RulesConfig = {
+  ...POCKET_STANDARD,
   deckSize: 30,
   openingHand: 5,
   maxRow: 4, // Active + Bench 3
@@ -124,36 +124,37 @@ export const POKEMON_QUICK: RulesConfig = {
  */
 export const RULE_PRESETS: Record<string, { label: string; description: string; rules: RulesConfig }> = {
   duel: {
-    label: 'Classic Duel',
-    description: 'MTG-style combat: attack the player, the defender declares blockers. Free mulligan. Empty-deck draw loses.',
+    label: 'Mana Clash: Duel',
+    description:
+      'The classic stack-and-blockers duel: attack the player, the defender declares blockers. Free mulligan. Empty-deck draw loses.',
     rules: { ...DEFAULT_RULES, mulligan: true, combatStyle: 'blockers' },
   },
   guarded: {
-    label: 'Guarded Arena',
+    label: 'Mana Clash: Guarded',
     description: 'Creatures guard their player: clear the row before going face. Fatigue deals growing damage. 30 life.',
     rules: { ...DEFAULT_RULES, mustAttackCreaturesFirst: true, fatigue: 'damage', startingLife: 30 },
   },
   blitz: {
-    label: 'Blitz',
+    label: 'Mana Clash: Blitz',
     description: 'No summoning sickness — creatures charge immediately. 15 life, 4-card opening hand.',
     rules: { ...DEFAULT_RULES, summoningSickness: false, startingLife: 15, openingHand: 4 },
   },
   attrition: {
-    label: 'Attrition',
+    label: 'Mana Clash: Attrition',
     description: 'The long game: 40 life, fatigue deals growing damage, defenders always strike back, free mulligan.',
     rules: { ...DEFAULT_RULES, startingLife: 40, fatigue: 'damage', mulligan: true },
   },
   league: {
-    label: 'League Quick',
+    label: 'Pocket League: Quick',
     description:
-      'Pokémon-TCG-style: Active & Bench, energy attachment, evolution, retreat, 3 prizes. 30-card decks, Bench of 3.',
-    rules: { ...POKEMON_QUICK },
+      'Active & Bench, energy attachment, evolution, retreat, 3 prizes. 30-card decks, Bench of 3.',
+    rules: { ...POCKET_QUICK },
   },
   leagueStandard: {
-    label: 'League Standard',
+    label: 'Pocket League: Standard',
     description:
       'The full league ruleset: 60-card decks, 7-card hands, Bench of 5, 6 prizes, first player cannot attack or play a Supporter on turn 1.',
-    rules: { ...POKEMON_STANDARD },
+    rules: { ...POCKET_STANDARD },
   },
 };
 
@@ -184,7 +185,7 @@ export function mergeRules(partial?: Partial<RulesConfig> | null): RulesConfig {
   r.mulligan = bool(partial.mulligan, r.mulligan);
   r.combatStyle =
     partial.combatStyle === 'blockers' ? 'blockers' : partial.combatStyle === 'targeted' ? 'targeted' : r.combatStyle;
-  r.gameMode = partial.gameMode === 'pokemon' ? 'pokemon' : partial.gameMode === 'standard' ? 'standard' : r.gameMode;
+  r.gameMode = partial.gameMode === 'pocket' ? 'pocket' : partial.gameMode === 'standard' ? 'standard' : r.gameMode;
   r.prizes = num(partial.prizes, 1, 10, r.prizes);
   r.starPrizes = num(partial.starPrizes, 1, 3, r.starPrizes);
   r.firstTurnNoAttack = bool(partial.firstTurnNoAttack, r.firstTurnNoAttack);

@@ -6,7 +6,7 @@ import { isStatusImmune } from './passives.js';
 import { stickerGame, trainerGame } from './types.js';
 
 /**
- * Board bookkeeping for the pokemon mode: putting stickers into play,
+ * Board bookkeeping for the pocket mode: putting stickers into play,
  * damage counters, energy, conditions, and knockouts. The engine and the
  * effect-DSL interpreter both build on these.
  */

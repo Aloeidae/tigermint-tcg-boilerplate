@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import {
-  buildDemoDeck, buildStarterPokemonDeck, DECK_SIZE, DEMO_CATALOG, padDeck,
-  POKEMON_DEMO_CARDS, RULE_PRESETS, type CardDef, type RulesConfig,
+  buildDemoDeck, buildStarterPocketDeck, DECK_SIZE, DEMO_CATALOG, padDeck,
+  POCKET_DEMO_CARDS, RULE_PRESETS, type CardDef, type RulesConfig,
 } from '@tcg/shared';
 import { THEME } from '../theme.js';
 import { loadLocalPack, packDeck, type LocalPack } from '../pack.js';
@@ -370,7 +370,7 @@ export class MenuScene extends Phaser.Scene {
       ...fromChain,
       ...fromTigermint.filter((n) => !seen.has(`${n.collection}#${n.index}`)),
     ];
-    // Pokemon-mode data rides along from the pack manifest (matched by the
+    // Pocket-mode data rides along from the pack manifest (matched by the
     // minted Card ID trait, with name/id fallbacks).
     this.nftCards = nfts.map((n) => withGameBlock(nftToCard(n), this.pack, nftCardId(n)));
     this.rebuildDeck();
@@ -498,14 +498,14 @@ export class MenuScene extends Phaser.Scene {
 
   /**
    * The deck a match actually starts with. Standard presets use this.deck;
-   * pokemon (League) presets need stickers/energy/trainers instead, so a
+   * pocket (League) presets need stickers/energy/trainers instead, so a
    * starter deck is assembled from every available card with a `game` block
    * (local pack + owned NFTs), falling back to the built-in league demo set.
    */
   private gameDeck(): CardDef[] {
-    if (this.rules.gameMode !== 'pokemon') return this.deck;
+    if (this.rules.gameMode !== 'pocket') return this.deck;
     const pool = [...(this.pack?.cards ?? []), ...this.nftCards].filter((d) => d.game);
-    return buildStarterPokemonDeck(pool.length > 0 ? pool : POKEMON_DEMO_CARDS, this.rules.deckSize);
+    return buildStarterPocketDeck(pool.length > 0 ? pool : POCKET_DEMO_CARDS, this.rules.deckSize);
   }
 
   /** Dev-only: the overlay-card layout editor (see scenes/LayoutScene.ts). */
@@ -514,7 +514,7 @@ export class MenuScene extends Phaser.Scene {
     const pool = [
       ...(this.pack?.cards ?? []),
       ...this.nftCards,
-      ...(this.pack ? [] : [...DEMO_CATALOG, ...POKEMON_DEMO_CARDS]),
+      ...(this.pack ? [] : [...DEMO_CATALOG, ...POCKET_DEMO_CARDS]),
     ].slice(0, 40);
     await ensureArtTextures(this, pool);
     this.showOverlay(false);

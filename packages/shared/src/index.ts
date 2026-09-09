@@ -15,14 +15,14 @@ export * from './ai.js';
 export * from './overlay.js';
 export { other, findCreature } from './helpers.js';
 
-// Pokemon game mode (rules.gameMode 'pokemon').
-export * from './pokemon/types.js';
-export * from './pokemon/conditions.js';
-export * from './pokemon/passives.js';
-export * from './pokemon/board.js';
-export * from './pokemon/ops.js';
-export * from './pokemon/rng.js';
-export * from './pokemon/engine.js';
-export * from './pokemon/deck.js';
-export * from './pokemon/demo.js';
-export * from './pokemon/ai.js';
+// Pocket game mode (rules.gameMode 'pocket').
+export * from './pocket/types.js';
+export * from './pocket/conditions.js';
+export * from './pocket/passives.js';
+export * from './pocket/board.js';
+export * from './pocket/ops.js';
+export * from './pocket/rng.js';
+export * from './pocket/engine.js';
+export * from './pocket/deck.js';
+export * from './pocket/demo.js';
+export * from './pocket/ai.js';

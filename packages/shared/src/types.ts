@@ -1,5 +1,5 @@
 import type { RulesConfig } from './rules.js';
-import type { GameBlock, PokemonTurnFlags } from './pokemon/types.js';
+import type { GameBlock, PocketTurnFlags } from './pocket/types.js';
 import type { OverlayLayout } from './overlay.js';
 
 export type PlayerId = 0 | 1;
@@ -11,7 +11,7 @@ export type CardType = 'creature' | 'equipment' | 'spell';
  * the active player steps through main1 -> combat -> main2 with AdvancePhase.
  * `block` exists only under blockers-style combat: after attackers are
  * declared, the DEFENDER assigns blockers before damage resolves.
- * `setup` exists only in the pokemon game mode: both players pick their
+ * `setup` exists only in the pocket game mode: both players pick their
  * opening Active (and optional Bench) before turn 1 starts.
  */
 export type Phase = 'main1' | 'combat' | 'block' | 'main2' | 'setup';
@@ -113,8 +113,8 @@ export interface CardDef {
    */
   skills?: SkillRef[];
   /**
-   * Pokemon-mode definition (see pokemon/types.ts). Cards that carry one are
-   * playable under `rules.gameMode: 'pokemon'`; the legacy fields above keep
+   * Pocket-mode definition (see pocket/types.ts). Cards that carry one are
+   * playable under `rules.gameMode: 'pocket'`; the legacy fields above keep
    * the same card playable under the standard engine.
    */
   game?: GameBlock;
@@ -141,7 +141,7 @@ export interface CreatureOnBoard {
   /** Active statuses (Poison, Frozen, Shield… — see statuses.ts). */
   statuses: StatusRef[];
 
-  // ---- Pokemon mode only (rules.gameMode 'pokemon') ----
+  // ---- Pocket mode only (rules.gameMode 'pocket') ----
   /** Attached energy (reaction) cards — public information. */
   reactions?: CardInstance[];
   /** The one attached Tool (gift), if any. */
@@ -170,13 +170,13 @@ export interface PlayerState {
   /** Whether this player has spent their opening-hand mulligan. */
   mulliganUsed: boolean;
 
-  // ---- Pokemon mode only ----
+  // ---- Pocket mode only ----
   /** Face-down prize cards. Taking the last one wins the game. */
   prizes?: CardInstance[];
   /** Prizes taken so far (drives bonusPerPrizeTaken and the HUD). */
   prizesTaken?: number;
   /** Per-turn action flags (energy attachment, supporter, retreat…). */
-  turnFlags?: PokemonTurnFlags;
+  turnFlags?: PocketTurnFlags;
 }
 
 export interface GameState {
@@ -195,7 +195,7 @@ export interface GameState {
   /** Blockers-style combat: the defender's declared blocks. */
   blocks: BlockPair[];
 
-  // ---- Pokemon mode only ----
+  // ---- Pocket mode only ----
   /** The Stadium (channel) in play — shared, affects both players. */
   channel?: { card: CardInstance; owner: PlayerId } | null;
   /** A player must pick a new Active after a knockout before play continues. */
@@ -219,10 +219,10 @@ export interface OpponentView {
   deckCount: number;
   row: (CreatureOnBoard | null)[];
   graveyardCount: number;
-  /** Pokemon mode: face-down prizes left / taken so far. */
+  /** Pocket mode: face-down prizes left / taken so far. */
   prizeCount?: number;
   prizesTaken?: number;
-  /** Pokemon mode setup: this player has placed their opening board. */
+  /** Pocket mode setup: this player has placed their opening board. */
   ready?: boolean;
 }
 
@@ -239,12 +239,12 @@ export interface SelfView {
   mulliganUsed: boolean;
   /** Spectator views only: the hidden hand's size (hand itself is empty). */
   handCount?: number;
-  /** Pokemon mode: face-down prizes left / taken so far (contents hidden). */
+  /** Pocket mode: face-down prizes left / taken so far (contents hidden). */
   prizeCount?: number;
   prizesTaken?: number;
-  /** Pokemon mode: my per-turn action flags (for graying out the UI). */
-  turnFlags?: PokemonTurnFlags;
-  /** Pokemon mode setup: I have placed my opening board. */
+  /** Pocket mode: my per-turn action flags (for graying out the UI). */
+  turnFlags?: PocketTurnFlags;
+  /** Pocket mode setup: I have placed my opening board. */
   ready?: boolean;
 }
 
@@ -262,9 +262,9 @@ export interface PlayerView {
   /** Blockers-style combat state (public information). */
   attackers: string[];
   blocks: BlockPair[];
-  /** Pokemon mode: the Stadium in play (public). */
+  /** Pocket mode: the Stadium in play (public). */
   channel?: { card: CardInstance; owner: PlayerId } | null;
-  /** Pokemon mode: who must promote a new Active before play continues. */
+  /** Pocket mode: who must promote a new Active before play continues. */
   pendingPromote?: PlayerId | null;
   you: SelfView;
   opponent: OpponentView;

@@ -2,7 +2,7 @@ import Phaser from 'phaser';
 import {
   buildDemoDeck,
   mergeOverlayLayout,
-  POKEMON_DEMO_CARDS,
+  POCKET_DEMO_CARDS,
   type CardDef,
   type OverlayElement,
   type OverlayLayout,
@@ -56,7 +56,7 @@ export class LayoutScene extends Phaser.Scene {
   }
 
   init(data: { pool?: CardDef[] }): void {
-    this.pool = data.pool?.length ? data.pool : [...buildDemoDeck().slice(0, 10), ...POKEMON_DEMO_CARDS];
+    this.pool = data.pool?.length ? data.pool : [...buildDemoDeck().slice(0, 10), ...POCKET_DEMO_CARDS];
     this.index = 0;
     this.selected = null;
   }

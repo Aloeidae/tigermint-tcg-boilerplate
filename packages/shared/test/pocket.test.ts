@@ -4,10 +4,10 @@ import {
   applyCommand,
   createGame,
   redactFor,
-  validatePokemonDeck,
-  buildStarterPokemonDeck,
-  POKEMON_DEMO_CARDS,
-  POKEMON_QUICK,
+  validatePocketDeck,
+  buildStarterPocketDeck,
+  POCKET_DEMO_CARDS,
+  POCKET_QUICK,
   chooseCommand,
   actingPlayer,
   isBasicSticker,
@@ -85,7 +85,7 @@ function deckOf(sticker: CardDef, type: ReactionType, extras: CardDef[] = []): C
   return deck;
 }
 
-const QUICK: Partial<RulesConfig> = { ...POKEMON_QUICK };
+const QUICK: Partial<RulesConfig> = { ...POCKET_QUICK };
 
 function ok(r: ReturnType<typeof applyCommand>): GameState {
   assert.ok(r.ok, !r.ok ? r.error : '');
@@ -128,7 +128,7 @@ function findEnergy(state: GameState, player: 0 | 1) {
 
 // --- tests -----------------------------------------------------------------
 
-test('pokemon: createGame opens in setup with prizes set and a basic in hand', () => {
+test('pocket: createGame opens in setup with prizes set and a basic in hand', () => {
   const state = newGame(deckOf(solidBasic, 'Solid'), deckOf(mindBasic, 'Mind'));
   assert.equal(state.phase, 'setup');
   for (const p of state.players) {
@@ -142,7 +142,7 @@ test('pokemon: createGame opens in setup with prizes set and a basic in hand', (
   assert.ok(!('prizes' in view.you));
 });
 
-test('pokemon: setup places boards, then turn 1 begins without a first draw', () => {
+test('pocket: setup places boards, then turn 1 begins without a first draw', () => {
   let state = newGame(deckOf(solidBasic, 'Solid'), deckOf(mindBasic, 'Mind'));
   const before = state.players[0].hand.length;
   state = doSetup(state);
@@ -154,7 +154,7 @@ test('pokemon: setup places boards, then turn 1 begins without a first draw', ()
   assert.equal(state.players[0].hand.length, before - state.players[0].row.filter(Boolean).length);
 });
 
-test('pokemon: one energy attachment per turn, and turn-1 attack ban', () => {
+test('pocket: one energy attachment per turn, and turn-1 attack ban', () => {
   let state = doSetup(newGame(deckOf(solidBasic, 'Solid'), deckOf(mindBasic, 'Mind')));
   state = untilInHand(state, 0, (d) => d.game?.kind === 'reaction');
   assert.equal(state.active, 0);
@@ -173,7 +173,7 @@ test('pokemon: one energy attachment per turn, and turn-1 attack ban', () => {
   }
 });
 
-test('pokemon: moves apply weakness, end the turn, and knockouts pay prizes + demand a promote', () => {
+test('pocket: moves apply weakness, end the turn, and knockouts pay prizes + demand a promote', () => {
   let state = doSetup(newGame(deckOf(solidBasic, 'Solid'), deckOf(mindBasic, 'Mind'), 11));
   // Power up player 0's active.
   state = untilInHand(state, 0, (d) => d.game?.kind === 'reaction');
@@ -214,7 +214,7 @@ test('pokemon: moves apply weakness, end the turn, and knockouts pay prizes + de
   }
 });
 
-test('pokemon: poison ticks between turns, sleep blocks attacking, coins are seed-deterministic', () => {
+test('pocket: poison ticks between turns, sleep blocks attacking, coins are seed-deterministic', () => {
   let state = doSetup(newGame(deckOf(solidBasic, 'Solid'), deckOf(mindBasic, 'Mind'), 21));
   state = untilInHand(state, 0, (d) => d.game?.kind === 'reaction');
   const att = state.players[0].row[0]!;
@@ -261,7 +261,7 @@ function scriptedRun(seed: number): GameState {
   return state;
 }
 
-test('pokemon: retreat pays the swap cost and is once per turn', () => {
+test('pocket: retreat pays the swap cost and is once per turn', () => {
   let state = doSetup(newGame(deckOf(solidBasic, 'Solid'), deckOf(mindBasic, 'Mind'), 41));
   state = untilInHand(state, 0, (d) => d.game?.kind === 'reaction');
   if (state.active !== 0) state = ok(applyCommand(state, { type: 'endTurn', player: state.active }));
@@ -280,7 +280,7 @@ test('pokemon: retreat pays the swap cost and is once per turn', () => {
   assert.ok(!again.ok, 'one retreat per turn');
 });
 
-test('pokemon: evolution needs time in play, keeps damage, and is banned on the first turns', () => {
+test('pocket: evolution needs time in play, keeps damage, and is banned on the first turns', () => {
   let state = doSetup(newGame(deckOf(solidBasic, 'Solid', [evoCard, evoCard, evoCard, evoCard]), deckOf(mindBasic, 'Mind'), 51));
   state = untilInHand(state, 0, (d) => d.id === 'tst-evo');
   if (state.active !== 0) state = ok(applyCommand(state, { type: 'endTurn', player: state.active }));
@@ -308,7 +308,7 @@ test('pokemon: evolution needs time in play, keeps damage, and is banned on the 
   assert.ok(!again.ok, 'cannot evolve the same sticker again this turn');
 });
 
-test('pokemon: items draw, supporters are one per turn', () => {
+test('pocket: items draw, supporters are one per turn', () => {
   let state = doSetup(newGame(deckOf(solidBasic, 'Solid', [drawBot, drawBot, drawAdmin, drawAdmin]), deckOf(mindBasic, 'Mind'), 61));
   state = untilInHand(state, 0, (d) => d.id === 'tst-bot');
   if (state.active !== 0) state = ok(applyCommand(state, { type: 'endTurn', player: state.active }));
@@ -327,7 +327,7 @@ test('pokemon: items draw, supporters are one per turn', () => {
   }
 });
 
-test('pokemon: taking the last prize wins the game', () => {
+test('pocket: taking the last prize wins the game', () => {
   let state = doSetup(newGame(deckOf(solidBasic, 'Solid'), deckOf(mindBasic, 'Mind'), 71, { prizes: 1 }));
   state = untilInHand(state, 0, (d) => d.game?.kind === 'reaction');
   const att = state.players[0].row[0]!;
@@ -346,28 +346,28 @@ test('pokemon: taking the last prize wins the game', () => {
   assert.equal(state.winner, 0);
 });
 
-test('pokemon: deck validation enforces size, basics, copy caps, unlimited basic energy', () => {
-  const rules = { ...POKEMON_QUICK };
+test('pocket: deck validation enforces size, basics, copy caps, unlimited basic energy', () => {
+  const rules = { ...POCKET_QUICK };
   const good = [
     ...new Array(4).fill(solidBasic),
     ...new Array(2).fill(evoCard),
     ...new Array(24).fill(energy('Solid')), // basic energy is unlimited
   ];
-  assert.deepEqual(validatePokemonDeck(good, rules), []);
+  assert.deepEqual(validatePocketDeck(good, rules), []);
   const noBasics = new Array(30).fill(energy('Solid'));
-  assert.ok(validatePokemonDeck(noBasics, rules).some((p) => p.includes('basic sticker')));
+  assert.ok(validatePocketDeck(noBasics, rules).some((p) => p.includes('basic sticker')));
   const tooMany = [...new Array(6).fill(evoCard), ...deckOf(solidBasic, 'Solid').slice(6)];
-  assert.ok(validatePokemonDeck(tooMany, rules).some((p) => p.includes('copies')));
+  assert.ok(validatePocketDeck(tooMany, rules).some((p) => p.includes('copies')));
 });
 
-test('pokemon: the starter-deck builder produces a legal deck from the demo set', () => {
-  const deck = buildStarterPokemonDeck(POKEMON_DEMO_CARDS, 30);
+test('pocket: the starter-deck builder produces a legal deck from the demo set', () => {
+  const deck = buildStarterPocketDeck(POCKET_DEMO_CARDS, 30);
   assert.equal(deck.length, 30);
-  assert.deepEqual(validatePokemonDeck(deck, { ...POKEMON_QUICK }), []);
+  assert.deepEqual(validatePocketDeck(deck, { ...POCKET_QUICK }), []);
 });
 
-test('pokemon: the AI plays a full demo game to completion', () => {
-  const deck = buildStarterPokemonDeck(POKEMON_DEMO_CARDS, 30);
+test('pocket: the AI plays a full demo game to completion', () => {
+  const deck = buildStarterPocketDeck(POCKET_DEMO_CARDS, 30);
   let { state } = createGame({ decks: [deck, deck], seed: 99, rules: { ...QUICK } });
   for (let i = 0; i < 2000 && !state.gameOver; i++) {
     const cmd = chooseCommand(state, actingPlayer(state));

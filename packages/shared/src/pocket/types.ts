@@ -1,13 +1,13 @@
 /**
- * Pokémon-TCG-style game mode ("league" rules): Active/Bench, energy
+ * Pocket League-TCG-style game mode ("league" rules): Active/Bench, energy
  * attachment, HP with damage, evolution, prizes, weakness/resistance,
  * retreat, and Item/Supporter/Stadium/Tool trainers.
  *
  * Cards opt in through `CardDef.game` — a self-contained block that mirrors
- * the pack-generator output (see pokemonref/): the legacy type/cost/attack/
+ * the pack-generator output (see pocketref/): the legacy type/cost/attack/
  * health fields keep the card playable under the standard engine, and this
- * block is what the pokemon engine reads. The vocabulary follows the
- * generator schema (sticker = Pokémon, reaction = Energy, bot = Item,
+ * block is what the pocket engine reads. The vocabulary follows the
+ * generator schema (sticker = Pocket League, reaction = Energy, bot = Item,
  * admin = Supporter, channel = Stadium, gift = Tool); rename freely in your
  * own skin — the keys are data, not UI.
  */
@@ -17,18 +17,18 @@ export type ReactionType =
   | 'Blaze' | 'Chill' | 'Zap' | 'Solid' | 'Mind' | 'Gross' | 'Heart' | 'Chaos'
   | 'Neutral' | 'Any';
 
-export type PokemonCardKind = 'sticker' | 'reaction' | 'bot' | 'admin' | 'channel' | 'gift';
+export type PocketCardKind = 'sticker' | 'reaction' | 'bot' | 'admin' | 'channel' | 'gift';
 
 export type Stage = 'Static' | 'Animated' | 'Premium';
 
-/** One entry of the effect DSL (see pokemon/ops.ts for the interpreter). */
+/** One entry of the effect DSL (see pocket/ops.ts for the interpreter). */
 export interface EffectOp {
   op: string;
   [k: string]: unknown;
 }
 
 /** One attack on a sticker card. */
-export interface PokemonMove {
+export interface PocketMove {
   name: string;
   /** Energy cost; 'Neutral' entries accept any attached type. */
   cost: ReactionType[];
@@ -46,7 +46,7 @@ export type TraitTrigger =
   | 'static' | 'onPlay' | 'onTurnStart' | 'oncePerTurn'
   | 'onDamaged' | 'onKO' | 'onKOOpponent';
 
-/** A passive ability (Pokémon "Ability"). Never costs energy. */
+/** A passive ability (Pocket League "Ability"). Never costs energy. */
 export interface Trait {
   key: string;
   name: string;
@@ -60,7 +60,7 @@ export interface StickerGame {
   stage: Stage;
   /** 0 = basic (playable from hand), 1/2 = evolutions. */
   stageIndex: 0 | 1 | 2;
-  /** Star sticker (Pokémon-ex): strong from turn one, gives extra prizes. */
+  /** Star sticker (Pocket League-ex): strong from turn one, gives extra prizes. */
   star?: boolean;
   /** Card id (or name) of the stage below; evolutions play on top of it. */
   upgradesFrom?: string | null;
@@ -68,7 +68,7 @@ export interface StickerGame {
   typeEmoji?: string;
   hp: number;
   trait?: Trait | null;
-  moves: PokemonMove[];
+  moves: PocketMove[];
   weakness?: ReactionType | null;
   resistance?: ReactionType | null;
   /** Retreat cost, in attached energy discarded. */
@@ -98,7 +98,7 @@ export interface ReactionGame {
 export type GameBlock = StickerGame | TrainerGame | ReactionGame;
 
 /** Per-turn action flags for one player (reset at their turn start). */
-export interface PokemonTurnFlags {
+export interface PocketTurnFlags {
   /** The once-per-turn energy attachment from hand. */
   energy: boolean;
   /** The one Supporter (admin) per turn. */
@@ -117,7 +117,7 @@ export interface PokemonTurnFlags {
   locked: string[];
 }
 
-export function freshTurnFlags(): PokemonTurnFlags {
+export function freshTurnFlags(): PocketTurnFlags {
   return {
     energy: false, supporter: false, stadium: false, swap: false,
     extraAttach: false, stadiumDraw: false, played: {}, locked: [],

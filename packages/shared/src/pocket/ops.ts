@@ -12,7 +12,7 @@ import {
 } from './board.js';
 
 /**
- * The effect-DSL interpreter for the pokemon game mode — the registry that
+ * The effect-DSL interpreter for the pocket game mode — the registry that
  * makes move text, Items, Supporters, Stadiums, Tools, and Traits data
  * instead of code. Each `op` in a card's `effects` array looks up a handler
  * here; register your own with registerOp() and reference it from card data.

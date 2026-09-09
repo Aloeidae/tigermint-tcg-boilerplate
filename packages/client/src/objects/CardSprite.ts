@@ -107,7 +107,7 @@ export class CardSprite extends Phaser.GameObjects.Container {
       gTop.strokeRoundedRect(-w / 2, -h / 2, w, h, 10);
       const sticker = def.game?.kind === 'sticker' ? def.game : null;
       if (sticker) {
-        // Pokemon-mode sticker: no mana cost — type emoji top-left, HP
+        // Pocket-mode sticker: no mana cost — type emoji top-left, HP
         // top-right, energy pips along the bottom.
         const costSpot = badgeSpot(w, h, 'fullArt', 'cost');
         this.typeEmoji(scene, costSpot, sticker.typeEmoji ?? TYPE_EMOJI[sticker.type] ?? '👀');
@@ -192,7 +192,7 @@ export class CardSprite extends Phaser.GameObjects.Container {
     this.add(name);
 
     // Skill line (icons + names). Board creatures show effective skills,
-    // including ones granted by attached equipment. Pokemon-mode stickers
+    // including ones granted by attached equipment. Pocket-mode stickers
     // show their trait here instead; their moves fill the body text below.
     const sticker = def.game?.kind === 'sticker' ? def.game : null;
     const skillRefs = opts.creature ? creatureSkills(opts.creature) : def.skills;
@@ -214,7 +214,7 @@ export class CardSprite extends Phaser.GameObjects.Container {
     }
 
     // Rules text. Stickers list their moves (cost pips · name · damage);
-    // other pokemon-mode cards print their game text.
+    // other pocket-mode cards print their game text.
     let bodyText: string;
     if (sticker) {
       bodyText = sticker.moves
@@ -241,7 +241,7 @@ export class CardSprite extends Phaser.GameObjects.Container {
 
     // Live badges, placed per THEME.card.badges.framed.
     if (sticker) {
-      // Pokemon-mode: type emoji instead of a mana cost, HP top-right,
+      // Pocket-mode: type emoji instead of a mana cost, HP top-right,
       // retreat cost tucked into the bottom-right corner.
       const costSpot = badgeSpot(w, h, 'framed', 'cost');
       this.typeEmoji(scene, costSpot, sticker.typeEmoji ?? TYPE_EMOJI[sticker.type] ?? '👀');
@@ -470,7 +470,7 @@ export class CardSprite extends Phaser.GameObjects.Container {
     if (spec && this.postFX) this.postFX.addShine(spec.speed, spec.lineWidth, spec.gradient);
   }
 
-  /** A bare emoji where a badge would sit (pokemon-mode type marker). */
+  /** A bare emoji where a badge would sit (pocket-mode type marker). */
   private typeEmoji(scene: Phaser.Scene, spot: { x: number; y: number; size: number }, emoji: string): void {
     const t = scene.add
       .text(spot.x + spot.size / 2, spot.y + spot.size / 2, emoji, {
@@ -665,7 +665,7 @@ function parseColor(hex: string): number {
   return Number.isFinite(n) ? n : 0xffffff;
 }
 
-/** Fallback emoji per pokemon-mode energy type (cards may carry their own). */
+/** Fallback emoji per pocket-mode energy type (cards may carry their own). */
 export const TYPE_EMOJI: Record<string, string> = {
   Blaze: '🔥', Chill: '🥶', Zap: '⚡', Solid: '👍', Mind: '🤯',
   Gross: '💩', Heart: '❤️', Chaos: '😂', Neutral: '👀', Any: '✳️',

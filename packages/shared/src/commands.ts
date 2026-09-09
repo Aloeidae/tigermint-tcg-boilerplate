@@ -36,7 +36,7 @@ export type Command =
   /** Shuffle back the opening hand and redraw (rules.mulligan, first round only). */
   | { type: 'mulligan'; player: PlayerId }
   | { type: 'concede'; player: PlayerId }
-  // ---- Pokemon game mode (rules.gameMode 'pokemon') ----
+  // ---- Pocket game mode (rules.gameMode 'pocket') ----
   /** Setup phase: place the opening Active (and optional Bench basics). Both players send one. */
   | { type: 'setup'; player: PlayerId; pinnedId: string; benchIds?: string[] }
   /** Play a basic sticker from hand onto the Bench (or the empty Active spot). */

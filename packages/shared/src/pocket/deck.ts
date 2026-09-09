@@ -4,11 +4,11 @@ import type { ReactionType } from './types.js';
 import { isBasicSticker, reactionGame, stickerGame, trainerGame } from './types.js';
 
 /**
- * Deck legality and a starter-deck builder for the pokemon mode.
+ * Deck legality and a starter-deck builder for the pocket mode.
  */
 
 /** Problems with a deck under the given rules; empty = legal. */
-export function validatePokemonDeck(defs: CardDef[], rules: RulesConfig): string[] {
+export function validatePocketDeck(defs: CardDef[], rules: RulesConfig): string[] {
   const problems: string[] = [];
   if (defs.length !== rules.deckSize) {
     problems.push(`Deck must be exactly ${rules.deckSize} cards (has ${defs.length})`);
@@ -36,7 +36,7 @@ export function validatePokemonDeck(defs: CardDef[], rules: RulesConfig): string
  * two best-supported types, take their sticker lines, sprinkle trainers,
  * and fill the rest with matching basic energy. Deterministic.
  */
-export function buildStarterPokemonDeck(pool: CardDef[], deckSize: number): CardDef[] {
+export function buildStarterPocketDeck(pool: CardDef[], deckSize: number): CardDef[] {
   const stickers = pool.filter((d) => stickerGame(d));
   const trainers = pool.filter((d) => {
     const t = trainerGame(d);

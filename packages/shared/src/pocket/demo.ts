@@ -2,7 +2,7 @@ import type { CardDef } from '../types.js';
 import type { ReactionType } from './types.js';
 
 /**
- * A built-in demo set for the pokemon game mode, so League presets play out
+ * A built-in demo set for the pocket game mode, so League presets play out
  * of the box with no pack or NFTs — same forest crew as the standard demo
  * catalog. Every card doubles as a worked example of the `game` block:
  * evolution lines, a star sticker, traits on three triggers, conditions,
@@ -19,7 +19,7 @@ const energy = (id: string, type: ReactionType, emoji: string): CardDef => ({
   game: { kind: 'reaction', type, typeEmoji: emoji, special: false, provides: [type] },
 });
 
-export const POKEMON_DEMO_CARDS: CardDef[] = [
+export const POCKET_DEMO_CARDS: CardDef[] = [
   // --- Solid line: Sprout Cub -> Bramble Bear ------------------------------
   {
     id: 'pk-cub', name: 'Sprout Cub', type: 'creature', cost: 2, attack: 2, health: 7,

@@ -1,0 +1,1763 @@
+{
+  "name": "League Smoke Set",
+  "_readme": "Small Pokemon-style (League mode) test set from the boilerplate demo cards, shaped for TigerMint card-set launches: `attributes` mint verbatim (incl. Card ID; TigerMint appends Rarity itself), `game` is the full rules block served back at /api/v1/collections/{slug}/pack.json.",
+  "cards": [
+    {
+      "id": "pk-cub",
+      "name": "Sprout Cub",
+      "type": "creature",
+      "cost": 2,
+      "art": "pk-cub.png",
+      "fullArt": false,
+      "rarity": "COMMON",
+      "description": "A stubborn little wall.",
+      "editions": 6,
+      "attributes": [
+        {
+          "trait_type": "Card ID",
+          "value": "pk-cub"
+        },
+        {
+          "trait_type": "Card Name",
+          "value": "Sprout Cub"
+        },
+        {
+          "trait_type": "Type",
+          "value": "creature"
+        },
+        {
+          "trait_type": "Cost",
+          "value": 2
+        },
+        {
+          "trait_type": "Attack",
+          "value": 2
+        },
+        {
+          "trait_type": "Health",
+          "value": 7
+        },
+        {
+          "trait_type": "Card Style",
+          "value": "framed"
+        },
+        {
+          "trait_type": "Card Kind",
+          "value": "sticker"
+        },
+        {
+          "trait_type": "Stage",
+          "value": "Static"
+        },
+        {
+          "trait_type": "Reaction Type",
+          "value": "Solid"
+        },
+        {
+          "trait_type": "HP",
+          "value": 70
+        },
+        {
+          "trait_type": "Weakness",
+          "value": "Mind"
+        },
+        {
+          "trait_type": "Resistance",
+          "value": "Chill"
+        },
+        {
+          "trait_type": "Swap Cost",
+          "value": 1
+        },
+        {
+          "trait_type": "Stars On KO",
+          "value": 1
+        },
+        {
+          "trait_type": "Upgrades From",
+          "value": ""
+        },
+        {
+          "trait_type": "Move 1",
+          "value": "Poke"
+        },
+        {
+          "trait_type": "Move 1 Cost",
+          "value": "Neutral"
+        },
+        {
+          "trait_type": "Move 1 Damage",
+          "value": "10"
+        },
+        {
+          "trait_type": "Move 2",
+          "value": "Body Slam"
+        },
+        {
+          "trait_type": "Move 2 Cost",
+          "value": "Solid Solid"
+        },
+        {
+          "trait_type": "Move 2 Damage",
+          "value": "30"
+        },
+        {
+          "trait_type": "Move 2 Text",
+          "value": "Flip a coin. If heads, the enemy Active is Lagging."
+        }
+      ],
+      "game": {
+        "kind": "sticker",
+        "stage": "Static",
+        "stageIndex": 0,
+        "type": "Solid",
+        "typeEmoji": "👍",
+        "hp": 70,
+        "moves": [
+          {
+            "name": "Poke",
+            "cost": [
+              "Neutral"
+            ],
+            "damage": 10,
+            "damageText": "10",
+            "expectedDamage": 10,
+            "text": ""
+          },
+          {
+            "name": "Body Slam",
+            "cost": [
+              "Solid",
+              "Solid"
+            ],
+            "damage": 30,
+            "damageText": "30",
+            "expectedDamage": 30,
+            "text": "Flip a coin. If heads, the enemy Active is Lagging.",
+            "effects": [
+              {
+                "op": "flipStatus",
+                "status": "Lagging"
+              }
+            ]
+          }
+        ],
+        "weakness": "Mind",
+        "resistance": "Chill",
+        "swapCost": 1
+      },
+      "attack": 2,
+      "health": 7
+    },
+    {
+      "id": "pk-bear",
+      "name": "Bramble Bear",
+      "type": "creature",
+      "cost": 4,
+      "art": "pk-bear.png",
+      "fullArt": false,
+      "rarity": "RARE",
+      "description": "The cub grew thorns.",
+      "editions": 4,
+      "attributes": [
+        {
+          "trait_type": "Card ID",
+          "value": "pk-bear"
+        },
+        {
+          "trait_type": "Card Name",
+          "value": "Bramble Bear"
+        },
+        {
+          "trait_type": "Type",
+          "value": "creature"
+        },
+        {
+          "trait_type": "Cost",
+          "value": 4
+        },
+        {
+          "trait_type": "Attack",
+          "value": 5
+        },
+        {
+          "trait_type": "Health",
+          "value": 12
+        },
+        {
+          "trait_type": "Card Style",
+          "value": "framed"
+        },
+        {
+          "trait_type": "Card Kind",
+          "value": "sticker"
+        },
+        {
+          "trait_type": "Stage",
+          "value": "Animated"
+        },
+        {
+          "trait_type": "Reaction Type",
+          "value": "Solid"
+        },
+        {
+          "trait_type": "HP",
+          "value": 120
+        },
+        {
+          "trait_type": "Weakness",
+          "value": "Mind"
+        },
+        {
+          "trait_type": "Resistance",
+          "value": "Chill"
+        },
+        {
+          "trait_type": "Swap Cost",
+          "value": 3
+        },
+        {
+          "trait_type": "Stars On KO",
+          "value": 1
+        },
+        {
+          "trait_type": "Upgrades From",
+          "value": "pk-cub"
+        },
+        {
+          "trait_type": "Trait",
+          "value": "Thick Fur"
+        },
+        {
+          "trait_type": "Trait Text",
+          "value": "Takes 10 less damage from moves."
+        },
+        {
+          "trait_type": "Move 1",
+          "value": "Maul"
+        },
+        {
+          "trait_type": "Move 1 Cost",
+          "value": "Solid Solid Neutral"
+        },
+        {
+          "trait_type": "Move 1 Damage",
+          "value": "60"
+        },
+        {
+          "trait_type": "Move 2",
+          "value": "Reckless Crash"
+        },
+        {
+          "trait_type": "Move 2 Cost",
+          "value": "Solid Solid Neutral Neutral"
+        },
+        {
+          "trait_type": "Move 2 Damage",
+          "value": "100"
+        },
+        {
+          "trait_type": "Move 2 Text",
+          "value": "This sticker does 20 damage to itself."
+        }
+      ],
+      "game": {
+        "kind": "sticker",
+        "stage": "Animated",
+        "stageIndex": 1,
+        "upgradesFrom": "pk-cub",
+        "type": "Solid",
+        "typeEmoji": "👍",
+        "hp": 120,
+        "trait": {
+          "key": "thick_fur",
+          "name": "Thick Fur",
+          "trigger": "static",
+          "text": "Takes 10 less damage from moves.",
+          "effects": [
+            {
+              "op": "armor",
+              "amount": 10
+            }
+          ]
+        },
+        "moves": [
+          {
+            "name": "Maul",
+            "cost": [
+              "Solid",
+              "Solid",
+              "Neutral"
+            ],
+            "damage": 60,
+            "damageText": "60",
+            "expectedDamage": 60,
+            "text": ""
+          },
+          {
+            "name": "Reckless Crash",
+            "cost": [
+              "Solid",
+              "Solid",
+              "Neutral",
+              "Neutral"
+            ],
+            "damage": 100,
+            "damageText": "100",
+            "expectedDamage": 100,
+            "text": "This sticker does 20 damage to itself.",
+            "effects": [
+              {
+                "op": "selfDamage",
+                "amount": 20
+              }
+            ]
+          }
+        ],
+        "weakness": "Mind",
+        "resistance": "Chill",
+        "swapCost": 3
+      },
+      "attack": 5,
+      "health": 12
+    },
+    {
+      "id": "pk-kit",
+      "name": "Ember Kit",
+      "type": "creature",
+      "cost": 1,
+      "art": "pk-kit.png",
+      "fullArt": false,
+      "rarity": "COMMON",
+      "description": "Warm to the touch. Sometimes too warm.",
+      "editions": 6,
+      "attributes": [
+        {
+          "trait_type": "Card ID",
+          "value": "pk-kit"
+        },
+        {
+          "trait_type": "Card Name",
+          "value": "Ember Kit"
+        },
+        {
+          "trait_type": "Type",
+          "value": "creature"
+        },
+        {
+          "trait_type": "Cost",
+          "value": 1
+        },
+        {
+          "trait_type": "Attack",
+          "value": 2
+        },
+        {
+          "trait_type": "Health",
+          "value": 6
+        },
+        {
+          "trait_type": "Card Style",
+          "value": "framed"
+        },
+        {
+          "trait_type": "Card Kind",
+          "value": "sticker"
+        },
+        {
+          "trait_type": "Stage",
+          "value": "Static"
+        },
+        {
+          "trait_type": "Reaction Type",
+          "value": "Blaze"
+        },
+        {
+          "trait_type": "HP",
+          "value": 60
+        },
+        {
+          "trait_type": "Weakness",
+          "value": "Chill"
+        },
+        {
+          "trait_type": "Resistance",
+          "value": "Heart"
+        },
+        {
+          "trait_type": "Swap Cost",
+          "value": 1
+        },
+        {
+          "trait_type": "Stars On KO",
+          "value": 1
+        },
+        {
+          "trait_type": "Upgrades From",
+          "value": ""
+        },
+        {
+          "trait_type": "Move 1",
+          "value": "Singe"
+        },
+        {
+          "trait_type": "Move 1 Cost",
+          "value": "Blaze"
+        },
+        {
+          "trait_type": "Move 1 Damage",
+          "value": "10"
+        },
+        {
+          "trait_type": "Move 1 Text",
+          "value": "Flip a coin. If heads, the enemy Active is Flamed."
+        },
+        {
+          "trait_type": "Move 2",
+          "value": "Tail Whip"
+        },
+        {
+          "trait_type": "Move 2 Cost",
+          "value": "Neutral Neutral"
+        },
+        {
+          "trait_type": "Move 2 Damage",
+          "value": "20"
+        }
+      ],
+      "game": {
+        "kind": "sticker",
+        "stage": "Static",
+        "stageIndex": 0,
+        "type": "Blaze",
+        "typeEmoji": "🔥",
+        "hp": 60,
+        "moves": [
+          {
+            "name": "Singe",
+            "cost": [
+              "Blaze"
+            ],
+            "damage": 10,
+            "damageText": "10",
+            "expectedDamage": 10,
+            "text": "Flip a coin. If heads, the enemy Active is Flamed.",
+            "effects": [
+              {
+                "op": "flipStatus",
+                "status": "Flamed"
+              }
+            ]
+          },
+          {
+            "name": "Tail Whip",
+            "cost": [
+              "Neutral",
+              "Neutral"
+            ],
+            "damage": 20,
+            "damageText": "20",
+            "expectedDamage": 20,
+            "text": ""
+          }
+        ],
+        "weakness": "Chill",
+        "resistance": "Heart",
+        "swapCost": 1
+      },
+      "attack": 2,
+      "health": 6
+    },
+    {
+      "id": "pk-fox",
+      "name": "Cinder Fox",
+      "type": "creature",
+      "cost": 3,
+      "art": "pk-fox.png",
+      "fullArt": false,
+      "rarity": "RARE",
+      "description": "Leaves scorched pawprints.",
+      "editions": 4,
+      "attributes": [
+        {
+          "trait_type": "Card ID",
+          "value": "pk-fox"
+        },
+        {
+          "trait_type": "Card Name",
+          "value": "Cinder Fox"
+        },
+        {
+          "trait_type": "Type",
+          "value": "creature"
+        },
+        {
+          "trait_type": "Cost",
+          "value": 3
+        },
+        {
+          "trait_type": "Attack",
+          "value": 5
+        },
+        {
+          "trait_type": "Health",
+          "value": 10
+        },
+        {
+          "trait_type": "Card Style",
+          "value": "framed"
+        },
+        {
+          "trait_type": "Card Kind",
+          "value": "sticker"
+        },
+        {
+          "trait_type": "Stage",
+          "value": "Animated"
+        },
+        {
+          "trait_type": "Reaction Type",
+          "value": "Blaze"
+        },
+        {
+          "trait_type": "HP",
+          "value": 100
+        },
+        {
+          "trait_type": "Weakness",
+          "value": "Chill"
+        },
+        {
+          "trait_type": "Resistance",
+          "value": "Heart"
+        },
+        {
+          "trait_type": "Swap Cost",
+          "value": 2
+        },
+        {
+          "trait_type": "Stars On KO",
+          "value": 1
+        },
+        {
+          "trait_type": "Upgrades From",
+          "value": "pk-kit"
+        },
+        {
+          "trait_type": "Move 1",
+          "value": "Flame Burst"
+        },
+        {
+          "trait_type": "Move 1 Cost",
+          "value": "Blaze Neutral"
+        },
+        {
+          "trait_type": "Move 1 Damage",
+          "value": "40"
+        },
+        {
+          "trait_type": "Move 1 Text",
+          "value": "The enemy Active is Flamed."
+        },
+        {
+          "trait_type": "Move 2",
+          "value": "Blaze Kick"
+        },
+        {
+          "trait_type": "Move 2 Cost",
+          "value": "Blaze Blaze Neutral"
+        },
+        {
+          "trait_type": "Move 2 Damage",
+          "value": "70+"
+        },
+        {
+          "trait_type": "Move 2 Text",
+          "value": "Flip a coin. If heads, this move does 20 more damage."
+        }
+      ],
+      "game": {
+        "kind": "sticker",
+        "stage": "Animated",
+        "stageIndex": 1,
+        "upgradesFrom": "pk-kit",
+        "type": "Blaze",
+        "typeEmoji": "🔥",
+        "hp": 100,
+        "moves": [
+          {
+            "name": "Flame Burst",
+            "cost": [
+              "Blaze",
+              "Neutral"
+            ],
+            "damage": 40,
+            "damageText": "40",
+            "expectedDamage": 40,
+            "text": "The enemy Active is Flamed.",
+            "effects": [
+              {
+                "op": "status",
+                "status": "Flamed"
+              }
+            ]
+          },
+          {
+            "name": "Blaze Kick",
+            "cost": [
+              "Blaze",
+              "Blaze",
+              "Neutral"
+            ],
+            "damage": 70,
+            "damageText": "70+",
+            "expectedDamage": 80,
+            "text": "Flip a coin. If heads, this move does 20 more damage.",
+            "effects": [
+              {
+                "op": "flipBonus",
+                "bonus": 20
+              }
+            ]
+          }
+        ],
+        "weakness": "Chill",
+        "resistance": "Heart",
+        "swapCost": 2
+      },
+      "attack": 5,
+      "health": 10
+    },
+    {
+      "id": "pk-asp",
+      "name": "Bog Asp",
+      "type": "creature",
+      "cost": 2,
+      "art": "pk-asp.png",
+      "fullArt": false,
+      "rarity": "COMMON",
+      "description": "Its bite festers.",
+      "editions": 6,
+      "attributes": [
+        {
+          "trait_type": "Card ID",
+          "value": "pk-asp"
+        },
+        {
+          "trait_type": "Card Name",
+          "value": "Bog Asp"
+        },
+        {
+          "trait_type": "Type",
+          "value": "creature"
+        },
+        {
+          "trait_type": "Cost",
+          "value": 2
+        },
+        {
+          "trait_type": "Attack",
+          "value": 3
+        },
+        {
+          "trait_type": "Health",
+          "value": 5
+        },
+        {
+          "trait_type": "Card Style",
+          "value": "framed"
+        },
+        {
+          "trait_type": "Card Kind",
+          "value": "sticker"
+        },
+        {
+          "trait_type": "Stage",
+          "value": "Static"
+        },
+        {
+          "trait_type": "Reaction Type",
+          "value": "Gross"
+        },
+        {
+          "trait_type": "HP",
+          "value": 60
+        },
+        {
+          "trait_type": "Weakness",
+          "value": "Heart"
+        },
+        {
+          "trait_type": "Resistance",
+          "value": "Solid"
+        },
+        {
+          "trait_type": "Swap Cost",
+          "value": 1
+        },
+        {
+          "trait_type": "Stars On KO",
+          "value": 1
+        },
+        {
+          "trait_type": "Upgrades From",
+          "value": ""
+        },
+        {
+          "trait_type": "Move 1",
+          "value": "Venom Bite"
+        },
+        {
+          "trait_type": "Move 1 Cost",
+          "value": "Gross"
+        },
+        {
+          "trait_type": "Move 1 Damage",
+          "value": "10"
+        },
+        {
+          "trait_type": "Move 1 Text",
+          "value": "The enemy Active is Spammed."
+        },
+        {
+          "trait_type": "Move 2",
+          "value": "Gnaw"
+        },
+        {
+          "trait_type": "Move 2 Cost",
+          "value": "Gross Neutral"
+        },
+        {
+          "trait_type": "Move 2 Damage",
+          "value": "30"
+        }
+      ],
+      "game": {
+        "kind": "sticker",
+        "stage": "Static",
+        "stageIndex": 0,
+        "type": "Gross",
+        "typeEmoji": "💩",
+        "hp": 60,
+        "moves": [
+          {
+            "name": "Venom Bite",
+            "cost": [
+              "Gross"
+            ],
+            "damage": 10,
+            "damageText": "10",
+            "expectedDamage": 10,
+            "text": "The enemy Active is Spammed.",
+            "effects": [
+              {
+                "op": "status",
+                "status": "Spammed"
+              }
+            ]
+          },
+          {
+            "name": "Gnaw",
+            "cost": [
+              "Gross",
+              "Neutral"
+            ],
+            "damage": 30,
+            "damageText": "30",
+            "expectedDamage": 30,
+            "text": ""
+          }
+        ],
+        "weakness": "Heart",
+        "resistance": "Solid",
+        "swapCost": 1
+      },
+      "attack": 3,
+      "health": 5
+    },
+    {
+      "id": "pk-herald",
+      "name": "Meadow Herald",
+      "type": "creature",
+      "cost": 2,
+      "art": "pk-herald.png",
+      "fullArt": false,
+      "rarity": "COMMON",
+      "description": "Sings the bruises away.",
+      "editions": 6,
+      "attributes": [
+        {
+          "trait_type": "Card ID",
+          "value": "pk-herald"
+        },
+        {
+          "trait_type": "Card Name",
+          "value": "Meadow Herald"
+        },
+        {
+          "trait_type": "Type",
+          "value": "creature"
+        },
+        {
+          "trait_type": "Cost",
+          "value": 2
+        },
+        {
+          "trait_type": "Attack",
+          "value": 2
+        },
+        {
+          "trait_type": "Health",
+          "value": 7
+        },
+        {
+          "trait_type": "Card Style",
+          "value": "framed"
+        },
+        {
+          "trait_type": "Card Kind",
+          "value": "sticker"
+        },
+        {
+          "trait_type": "Stage",
+          "value": "Static"
+        },
+        {
+          "trait_type": "Reaction Type",
+          "value": "Heart"
+        },
+        {
+          "trait_type": "HP",
+          "value": 70
+        },
+        {
+          "trait_type": "Weakness",
+          "value": "Chaos"
+        },
+        {
+          "trait_type": "Resistance",
+          "value": "Mind"
+        },
+        {
+          "trait_type": "Swap Cost",
+          "value": 2
+        },
+        {
+          "trait_type": "Stars On KO",
+          "value": 1
+        },
+        {
+          "trait_type": "Upgrades From",
+          "value": ""
+        },
+        {
+          "trait_type": "Trait",
+          "value": "Self-Care"
+        },
+        {
+          "trait_type": "Trait Text",
+          "value": "At the start of your turn, heal 20 damage from this sticker."
+        },
+        {
+          "trait_type": "Move 1",
+          "value": "Soothing Song"
+        },
+        {
+          "trait_type": "Move 1 Cost",
+          "value": "Heart Neutral"
+        },
+        {
+          "trait_type": "Move 1 Damage",
+          "value": "20"
+        },
+        {
+          "trait_type": "Move 1 Text",
+          "value": "Heal 20 damage from each of your stickers."
+        }
+      ],
+      "game": {
+        "kind": "sticker",
+        "stage": "Static",
+        "stageIndex": 0,
+        "type": "Heart",
+        "typeEmoji": "❤️",
+        "hp": 70,
+        "trait": {
+          "key": "self_care",
+          "name": "Self-Care",
+          "trigger": "onTurnStart",
+          "text": "At the start of your turn, heal 20 damage from this sticker.",
+          "effects": [
+            {
+              "op": "heal",
+              "amount": 20,
+              "target": "self"
+            }
+          ]
+        },
+        "moves": [
+          {
+            "name": "Soothing Song",
+            "cost": [
+              "Heart",
+              "Neutral"
+            ],
+            "damage": 20,
+            "damageText": "20",
+            "expectedDamage": 20,
+            "text": "Heal 20 damage from each of your stickers.",
+            "effects": [
+              {
+                "op": "heal",
+                "amount": 20,
+                "target": "all"
+              }
+            ]
+          }
+        ],
+        "weakness": "Chaos",
+        "resistance": "Mind",
+        "swapCost": 2
+      },
+      "attack": 2,
+      "health": 7
+    },
+    {
+      "id": "pk-owl",
+      "name": "Drowsy Owl",
+      "type": "creature",
+      "cost": 2,
+      "art": "pk-owl.png",
+      "fullArt": false,
+      "rarity": "COMMON",
+      "description": "One hoot and the room yawns.",
+      "editions": 6,
+      "attributes": [
+        {
+          "trait_type": "Card ID",
+          "value": "pk-owl"
+        },
+        {
+          "trait_type": "Card Name",
+          "value": "Drowsy Owl"
+        },
+        {
+          "trait_type": "Type",
+          "value": "creature"
+        },
+        {
+          "trait_type": "Cost",
+          "value": 2
+        },
+        {
+          "trait_type": "Attack",
+          "value": 2
+        },
+        {
+          "trait_type": "Health",
+          "value": 6
+        },
+        {
+          "trait_type": "Card Style",
+          "value": "framed"
+        },
+        {
+          "trait_type": "Card Kind",
+          "value": "sticker"
+        },
+        {
+          "trait_type": "Stage",
+          "value": "Static"
+        },
+        {
+          "trait_type": "Reaction Type",
+          "value": "Mind"
+        },
+        {
+          "trait_type": "HP",
+          "value": 60
+        },
+        {
+          "trait_type": "Weakness",
+          "value": "Gross"
+        },
+        {
+          "trait_type": "Resistance",
+          "value": "Zap"
+        },
+        {
+          "trait_type": "Swap Cost",
+          "value": 1
+        },
+        {
+          "trait_type": "Stars On KO",
+          "value": 1
+        },
+        {
+          "trait_type": "Upgrades From",
+          "value": ""
+        },
+        {
+          "trait_type": "Move 1",
+          "value": "Hypno Hoot"
+        },
+        {
+          "trait_type": "Move 1 Cost",
+          "value": "Mind Neutral"
+        },
+        {
+          "trait_type": "Move 1 Damage",
+          "value": "20"
+        },
+        {
+          "trait_type": "Move 1 Text",
+          "value": "Flip a coin. If heads, the enemy Active is Muted."
+        }
+      ],
+      "game": {
+        "kind": "sticker",
+        "stage": "Static",
+        "stageIndex": 0,
+        "type": "Mind",
+        "typeEmoji": "🤯",
+        "hp": 60,
+        "moves": [
+          {
+            "name": "Hypno Hoot",
+            "cost": [
+              "Mind",
+              "Neutral"
+            ],
+            "damage": 20,
+            "damageText": "20",
+            "expectedDamage": 20,
+            "text": "Flip a coin. If heads, the enemy Active is Muted.",
+            "effects": [
+              {
+                "op": "flipStatus",
+                "status": "Muted"
+              }
+            ]
+          }
+        ],
+        "weakness": "Gross",
+        "resistance": "Zap",
+        "swapCost": 1
+      },
+      "attack": 2,
+      "health": 6
+    },
+    {
+      "id": "pk-grizzly",
+      "name": "Grandfather Grizzly",
+      "type": "creature",
+      "cost": 5,
+      "art": "pk-grizzly.png",
+      "fullArt": false,
+      "rarity": "LEGENDARY",
+      "description": "The forest answers to him.",
+      "editions": 2,
+      "attributes": [
+        {
+          "trait_type": "Card ID",
+          "value": "pk-grizzly"
+        },
+        {
+          "trait_type": "Card Name",
+          "value": "Grandfather Grizzly"
+        },
+        {
+          "trait_type": "Type",
+          "value": "creature"
+        },
+        {
+          "trait_type": "Cost",
+          "value": 5
+        },
+        {
+          "trait_type": "Attack",
+          "value": 6
+        },
+        {
+          "trait_type": "Health",
+          "value": 13
+        },
+        {
+          "trait_type": "Card Style",
+          "value": "framed"
+        },
+        {
+          "trait_type": "Card Kind",
+          "value": "sticker"
+        },
+        {
+          "trait_type": "Stage",
+          "value": "Star"
+        },
+        {
+          "trait_type": "Reaction Type",
+          "value": "Solid"
+        },
+        {
+          "trait_type": "HP",
+          "value": 130
+        },
+        {
+          "trait_type": "Weakness",
+          "value": "Mind"
+        },
+        {
+          "trait_type": "Resistance",
+          "value": "None"
+        },
+        {
+          "trait_type": "Swap Cost",
+          "value": 3
+        },
+        {
+          "trait_type": "Stars On KO",
+          "value": 2
+        },
+        {
+          "trait_type": "Upgrades From",
+          "value": ""
+        },
+        {
+          "trait_type": "Move 1",
+          "value": "Long Nap"
+        },
+        {
+          "trait_type": "Move 1 Cost",
+          "value": "Neutral"
+        },
+        {
+          "trait_type": "Move 1 Damage",
+          "value": "0"
+        },
+        {
+          "trait_type": "Move 1 Text",
+          "value": "Heal 40 damage from this sticker."
+        },
+        {
+          "trait_type": "Move 2",
+          "value": "Heavy Swipe"
+        },
+        {
+          "trait_type": "Move 2 Cost",
+          "value": "Solid Solid Neutral"
+        },
+        {
+          "trait_type": "Move 2 Damage",
+          "value": "80"
+        },
+        {
+          "trait_type": "Move 2 Text",
+          "value": "This sticker does 20 damage to itself."
+        }
+      ],
+      "game": {
+        "kind": "sticker",
+        "stage": "Static",
+        "stageIndex": 0,
+        "star": true,
+        "type": "Solid",
+        "typeEmoji": "👍",
+        "hp": 130,
+        "starsOnKO": 2,
+        "moves": [
+          {
+            "name": "Long Nap",
+            "cost": [
+              "Neutral"
+            ],
+            "damage": 0,
+            "damageText": "",
+            "expectedDamage": 15,
+            "text": "Heal 40 damage from this sticker.",
+            "effects": [
+              {
+                "op": "heal",
+                "amount": 40,
+                "target": "self"
+              }
+            ]
+          },
+          {
+            "name": "Heavy Swipe",
+            "cost": [
+              "Solid",
+              "Solid",
+              "Neutral"
+            ],
+            "damage": 80,
+            "damageText": "80",
+            "expectedDamage": 80,
+            "text": "This sticker does 20 damage to itself.",
+            "effects": [
+              {
+                "op": "selfDamage",
+                "amount": 20
+              }
+            ]
+          }
+        ],
+        "weakness": "Mind",
+        "resistance": null,
+        "swapCost": 3
+      },
+      "attack": 6,
+      "health": 13
+    },
+    {
+      "id": "pk-bot-forage",
+      "name": "Forage",
+      "type": "spell",
+      "cost": 1,
+      "art": "pk-bot-forage.png",
+      "fullArt": false,
+      "rarity": "COMMON",
+      "description": "Search your deck for a sticker.",
+      "editions": 6,
+      "attributes": [
+        {
+          "trait_type": "Card ID",
+          "value": "pk-bot-forage"
+        },
+        {
+          "trait_type": "Card Name",
+          "value": "Forage"
+        },
+        {
+          "trait_type": "Type",
+          "value": "spell"
+        },
+        {
+          "trait_type": "Cost",
+          "value": 1
+        },
+        {
+          "trait_type": "Card Style",
+          "value": "framed"
+        },
+        {
+          "trait_type": "Card Kind",
+          "value": "bot"
+        },
+        {
+          "trait_type": "Rules Text",
+          "value": "Search your deck for a sticker, reveal it, and put it into your hand."
+        }
+      ],
+      "game": {
+        "kind": "bot",
+        "text": "Search your deck for a sticker, reveal it, and put it into your hand.",
+        "effects": [
+          {
+            "op": "search",
+            "filter": {
+              "kind": "sticker"
+            },
+            "count": 1
+          }
+        ]
+      }
+    },
+    {
+      "id": "pk-bot-scout",
+      "name": "Scout Ahead",
+      "type": "spell",
+      "cost": 1,
+      "art": "pk-bot-scout.png",
+      "fullArt": false,
+      "rarity": "COMMON",
+      "description": "Draw 2 cards.",
+      "editions": 6,
+      "attributes": [
+        {
+          "trait_type": "Card ID",
+          "value": "pk-bot-scout"
+        },
+        {
+          "trait_type": "Card Name",
+          "value": "Scout Ahead"
+        },
+        {
+          "trait_type": "Type",
+          "value": "spell"
+        },
+        {
+          "trait_type": "Cost",
+          "value": 1
+        },
+        {
+          "trait_type": "Card Style",
+          "value": "framed"
+        },
+        {
+          "trait_type": "Card Kind",
+          "value": "bot"
+        },
+        {
+          "trait_type": "Rules Text",
+          "value": "Draw 2 cards."
+        }
+      ],
+      "game": {
+        "kind": "bot",
+        "text": "Draw 2 cards.",
+        "effects": [
+          {
+            "op": "draw",
+            "count": 2
+          }
+        ]
+      }
+    },
+    {
+      "id": "pk-admin-den",
+      "name": "Den Mother",
+      "type": "spell",
+      "cost": 2,
+      "art": "pk-admin-den.png",
+      "fullArt": false,
+      "rarity": "RARE",
+      "description": "Draw 3 cards.",
+      "editions": 6,
+      "attributes": [
+        {
+          "trait_type": "Card ID",
+          "value": "pk-admin-den"
+        },
+        {
+          "trait_type": "Card Name",
+          "value": "Den Mother"
+        },
+        {
+          "trait_type": "Type",
+          "value": "spell"
+        },
+        {
+          "trait_type": "Cost",
+          "value": 2
+        },
+        {
+          "trait_type": "Card Style",
+          "value": "framed"
+        },
+        {
+          "trait_type": "Card Kind",
+          "value": "admin"
+        },
+        {
+          "trait_type": "Rules Text",
+          "value": "Draw 3 cards."
+        }
+      ],
+      "game": {
+        "kind": "admin",
+        "text": "Draw 3 cards.",
+        "effects": [
+          {
+            "op": "draw",
+            "count": 3
+          }
+        ]
+      }
+    },
+    {
+      "id": "pk-gift-acorn",
+      "name": "Acorn Charm",
+      "type": "equipment",
+      "cost": 1,
+      "art": "pk-gift-acorn.png",
+      "fullArt": false,
+      "rarity": "COMMON",
+      "description": "+30 HP.",
+      "editions": 6,
+      "attributes": [
+        {
+          "trait_type": "Card ID",
+          "value": "pk-gift-acorn"
+        },
+        {
+          "trait_type": "Card Name",
+          "value": "Acorn Charm"
+        },
+        {
+          "trait_type": "Type",
+          "value": "equipment"
+        },
+        {
+          "trait_type": "Cost",
+          "value": 1
+        },
+        {
+          "trait_type": "Card Style",
+          "value": "framed"
+        },
+        {
+          "trait_type": "Card Kind",
+          "value": "gift"
+        },
+        {
+          "trait_type": "Rules Text",
+          "value": "The sticker this is attached to gets +30 HP."
+        }
+      ],
+      "game": {
+        "kind": "gift",
+        "text": "The sticker this is attached to gets +30 HP.",
+        "effects": [
+          {
+            "op": "hpBonus",
+            "amount": 30
+          }
+        ]
+      }
+    },
+    {
+      "id": "pk-channel-grove",
+      "name": "Sunlit Grove",
+      "type": "spell",
+      "cost": 2,
+      "art": "pk-channel-grove.png",
+      "fullArt": false,
+      "rarity": "RARE",
+      "description": "Draw when your Active is a basic.",
+      "editions": 6,
+      "attributes": [
+        {
+          "trait_type": "Card ID",
+          "value": "pk-channel-grove"
+        },
+        {
+          "trait_type": "Card Name",
+          "value": "Sunlit Grove"
+        },
+        {
+          "trait_type": "Type",
+          "value": "spell"
+        },
+        {
+          "trait_type": "Cost",
+          "value": 2
+        },
+        {
+          "trait_type": "Card Style",
+          "value": "framed"
+        },
+        {
+          "trait_type": "Card Kind",
+          "value": "channel"
+        },
+        {
+          "trait_type": "Rules Text",
+          "value": "Once during each player’s turn, that player draws a card if their Active sticker is a basic."
+        }
+      ],
+      "game": {
+        "kind": "channel",
+        "text": "Once during each player’s turn, that player draws a card if their Active sticker is a basic.",
+        "effects": [
+          {
+            "op": "conditionalDraw",
+            "condition": {
+              "activeStage": 0
+            },
+            "side": "both"
+          }
+        ]
+      }
+    },
+    {
+      "id": "pk-energy-solid",
+      "name": "👍 Solid Reaction",
+      "type": "spell",
+      "cost": 0,
+      "art": "pk-energy-solid.png",
+      "fullArt": false,
+      "rarity": "COMMON",
+      "description": "Basic energy.",
+      "editions": 20,
+      "attributes": [
+        {
+          "trait_type": "Card ID",
+          "value": "pk-energy-solid"
+        },
+        {
+          "trait_type": "Card Name",
+          "value": "👍 Solid Reaction"
+        },
+        {
+          "trait_type": "Type",
+          "value": "spell"
+        },
+        {
+          "trait_type": "Cost",
+          "value": 0
+        },
+        {
+          "trait_type": "Card Style",
+          "value": "framed"
+        },
+        {
+          "trait_type": "Card Kind",
+          "value": "reaction"
+        },
+        {
+          "trait_type": "Reaction Type",
+          "value": "Solid"
+        },
+        {
+          "trait_type": "Special",
+          "value": "No"
+        },
+        {
+          "trait_type": "Rules Text",
+          "value": "Basic energy."
+        }
+      ],
+      "game": {
+        "kind": "reaction",
+        "type": "Solid",
+        "typeEmoji": "👍",
+        "special": false,
+        "provides": [
+          "Solid"
+        ]
+      }
+    },
+    {
+      "id": "pk-energy-blaze",
+      "name": "🔥 Blaze Reaction",
+      "type": "spell",
+      "cost": 0,
+      "art": "pk-energy-blaze.png",
+      "fullArt": false,
+      "rarity": "COMMON",
+      "description": "Basic energy.",
+      "editions": 20,
+      "attributes": [
+        {
+          "trait_type": "Card ID",
+          "value": "pk-energy-blaze"
+        },
+        {
+          "trait_type": "Card Name",
+          "value": "🔥 Blaze Reaction"
+        },
+        {
+          "trait_type": "Type",
+          "value": "spell"
+        },
+        {
+          "trait_type": "Cost",
+          "value": 0
+        },
+        {
+          "trait_type": "Card Style",
+          "value": "framed"
+        },
+        {
+          "trait_type": "Card Kind",
+          "value": "reaction"
+        },
+        {
+          "trait_type": "Reaction Type",
+          "value": "Blaze"
+        },
+        {
+          "trait_type": "Special",
+          "value": "No"
+        },
+        {
+          "trait_type": "Rules Text",
+          "value": "Basic energy."
+        }
+      ],
+      "game": {
+        "kind": "reaction",
+        "type": "Blaze",
+        "typeEmoji": "🔥",
+        "special": false,
+        "provides": [
+          "Blaze"
+        ]
+      }
+    },
+    {
+      "id": "pk-energy-gross",
+      "name": "💩 Gross Reaction",
+      "type": "spell",
+      "cost": 0,
+      "art": "pk-energy-gross.png",
+      "fullArt": false,
+      "rarity": "COMMON",
+      "description": "Basic energy.",
+      "editions": 20,
+      "attributes": [
+        {
+          "trait_type": "Card ID",
+          "value": "pk-energy-gross"
+        },
+        {
+          "trait_type": "Card Name",
+          "value": "💩 Gross Reaction"
+        },
+        {
+          "trait_type": "Type",
+          "value": "spell"
+        },
+        {
+          "trait_type": "Cost",
+          "value": 0
+        },
+        {
+          "trait_type": "Card Style",
+          "value": "framed"
+        },
+        {
+          "trait_type": "Card Kind",
+          "value": "reaction"
+        },
+        {
+          "trait_type": "Reaction Type",
+          "value": "Gross"
+        },
+        {
+          "trait_type": "Special",
+          "value": "No"
+        },
+        {
+          "trait_type": "Rules Text",
+          "value": "Basic energy."
+        }
+      ],
+      "game": {
+        "kind": "reaction",
+        "type": "Gross",
+        "typeEmoji": "💩",
+        "special": false,
+        "provides": [
+          "Gross"
+        ]
+      }
+    },
+    {
+      "id": "pk-energy-heart",
+      "name": "❤️ Heart Reaction",
+      "type": "spell",
+      "cost": 0,
+      "art": "pk-energy-heart.png",
+      "fullArt": false,
+      "rarity": "COMMON",
+      "description": "Basic energy.",
+      "editions": 20,
+      "attributes": [
+        {
+          "trait_type": "Card ID",
+          "value": "pk-energy-heart"
+        },
+        {
+          "trait_type": "Card Name",
+          "value": "❤️ Heart Reaction"
+        },
+        {
+          "trait_type": "Type",
+          "value": "spell"
+        },
+        {
+          "trait_type": "Cost",
+          "value": 0
+        },
+        {
+          "trait_type": "Card Style",
+          "value": "framed"
+        },
+        {
+          "trait_type": "Card Kind",
+          "value": "reaction"
+        },
+        {
+          "trait_type": "Reaction Type",
+          "value": "Heart"
+        },
+        {
+          "trait_type": "Special",
+          "value": "No"
+        },
+        {
+          "trait_type": "Rules Text",
+          "value": "Basic energy."
+        }
+      ],
+      "game": {
+        "kind": "reaction",
+        "type": "Heart",
+        "typeEmoji": "❤️",
+        "special": false,
+        "provides": [
+          "Heart"
+        ]
+      }
+    },
+    {
+      "id": "pk-energy-mind",
+      "name": "🤯 Mind Reaction",
+      "type": "spell",
+      "cost": 0,
+      "art": "pk-energy-mind.png",
+      "fullArt": false,
+      "rarity": "COMMON",
+      "description": "Basic energy.",
+      "editions": 20,
+      "attributes": [
+        {
+          "trait_type": "Card ID",
+          "value": "pk-energy-mind"
+        },
+        {
+          "trait_type": "Card Name",
+          "value": "🤯 Mind Reaction"
+        },
+        {
+          "trait_type": "Type",
+          "value": "spell"
+        },
+        {
+          "trait_type": "Cost",
+          "value": 0
+        },
+        {
+          "trait_type": "Card Style",
+          "value": "framed"
+        },
+        {
+          "trait_type": "Card Kind",
+          "value": "reaction"
+        },
+        {
+          "trait_type": "Reaction Type",
+          "value": "Mind"
+        },
+        {
+          "trait_type": "Special",
+          "value": "No"
+        },
+        {
+          "trait_type": "Rules Text",
+          "value": "Basic energy."
+        }
+      ],
+      "game": {
+        "kind": "reaction",
+        "type": "Mind",
+        "typeEmoji": "🤯",
+        "special": false,
+        "provides": [
+          "Mind"
+        ]
+      }
+    }
+  ]
+}

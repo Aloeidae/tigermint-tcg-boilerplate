@@ -2,7 +2,7 @@ import type { GameState, PlayerId } from '../types.js';
 import type { GameEvent } from '../events.js';
 
 /**
- * Deterministic randomness for the pokemon mode. Every flip and shuffle
+ * Deterministic randomness for the pocket mode. Every flip and shuffle
  * advances `state.rngCursor`, so a replay of the same seed + commands
  * reproduces the exact same coins — pure-reducer friendly.
  */

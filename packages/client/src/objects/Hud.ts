@@ -93,10 +93,10 @@ export class Hud {
     this.heart(g, L.heartX, L.cy, opp.life);
     this.statChip(g, L.chip1X, L.cy, '🂠', `${opp.handCount}`);
     this.statChip(g, L.chip2X, L.cy, '⿻', `${opp.deckCount}`);
-    // Pokemon mode has no mana — that slot shows prize progress instead
+    // Pocket mode has no mana — that slot shows prize progress instead
     // (the heart doubles as "prizes left to give up").
-    const pokemon = view.rules.gameMode === 'pokemon';
-    if (pokemon) this.prizeText(L.manaX, L.cy, opp.prizesTaken ?? 0, view.rules.prizes);
+    const pocket = view.rules.gameMode === 'pocket';
+    if (pocket) this.prizeText(L.manaX, L.cy, opp.prizesTaken ?? 0, view.rules.prizes);
     else this.manaText(L.manaX, L.cy, opp.mana, opp.maxMana);
     const oppZone = this.scene.add.zone(L.portraitX, L.cy, 84, 84).setOrigin(0.5).setInteractive();
     oppZone.on('pointerdown', () => cb.onFaceClick(opp.id));
@@ -112,7 +112,7 @@ export class Hud {
     this.heart(g, L.heartX, py, me.life);
     this.statChip(g, L.chip1X, py, '⿻', `${me.deckCount}`);
     this.statChip(g, L.chip2X, py, '✝', `${me.graveyardCount}`);
-    if (pokemon) this.prizeText(L.manaX, py, me.prizesTaken ?? 0, view.rules.prizes, true);
+    if (pocket) this.prizeText(L.manaX, py, me.prizesTaken ?? 0, view.rules.prizes, true);
     else this.manaText(L.manaX, py, me.mana, me.maxMana, true);
     const myZone = this.scene.add.zone(L.portraitX, py, 84, 84).setOrigin(0.5).setInteractive();
     myZone.on('pointerdown', () => cb.onFaceClick(me.id));
@@ -251,7 +251,7 @@ export class Hud {
     this.container.add(t);
   }
 
-  /** Pokemon mode: prizes taken toward the win (the mana slot's tenant). */
+  /** Pocket mode: prizes taken toward the win (the mana slot's tenant). */
   private prizeText(x: number, y: number, taken: number, total: number, big = false): void {
     const t = this.scene.add
       .text(x, y, `⭐ ${taken}/${total}`, {

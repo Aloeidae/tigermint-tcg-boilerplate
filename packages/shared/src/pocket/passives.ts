@@ -3,7 +3,7 @@ import type { EffectOp } from './types.js';
 import { reactionGame, stickerGame, trainerGame } from './types.js';
 
 /**
- * Passive-effect plumbing for the pokemon game mode. "Passive" ops never run
+ * Passive-effect plumbing for the pocket game mode. "Passive" ops never run
  * as one-shot actions — the engine QUERIES them at the moments they matter:
  * armor when damage lands, noWeakness when weakness would apply, swap-cost
  * modifiers when retreating, and so on. They live on static traits, attached

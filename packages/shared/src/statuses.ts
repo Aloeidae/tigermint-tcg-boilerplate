@@ -45,7 +45,7 @@ export interface StatusDef {
   describe: (value: number) => string;
   /** Bearer cannot attack while this status is present (Frozen). */
   blocksAttack?: boolean;
-  /** Bearer cannot retreat/swap while this status is present (pokemon mode). */
+  /** Bearer cannot retreat/swap while this status is present (pocket mode). */
   blocksSwap?: boolean;
   hooks?: {
     /** At the bearer's owner's turn start (Poison ticks here). */
