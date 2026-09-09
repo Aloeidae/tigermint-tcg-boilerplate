@@ -26,3 +26,11 @@ export * from './pocket/engine.js';
 export * from './pocket/deck.js';
 export * from './pocket/demo.js';
 export * from './pocket/ai.js';
+
+// Rows game mode (rules.gameMode 'rows').
+export * from './rows/types.js';
+export * from './rows/power.js';
+export * from './rows/engine.js';
+export * from './rows/deck.js';
+export * from './rows/demo.js';
+export * from './rows/ai.js';

@@ -73,11 +73,11 @@ export function buildDemoDeck(): CardDef[] {
   return deck;
 }
 
-/** Pad a (possibly short) deck up to DECK_SIZE with demo cards, then trim. */
-export function padDeck(defs: CardDef[]): CardDef[] {
-  const deck = defs.slice(0, DECK_SIZE);
-  for (let i = 0; deck.length < DECK_SIZE; i++) {
-    deck.push(DEMO_CATALOG[i % DEMO_CATALOG.length]);
+/** Pad a (possibly short) deck up to `size` with filler cards, then trim. */
+export function padDeck(defs: CardDef[], size = DECK_SIZE, filler: CardDef[] = DEMO_CATALOG): CardDef[] {
+  const deck = defs.slice(0, size);
+  for (let i = 0; deck.length < size; i++) {
+    deck.push(filler[i % filler.length]);
   }
   return deck;
 }

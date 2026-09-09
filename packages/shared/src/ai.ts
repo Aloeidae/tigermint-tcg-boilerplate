@@ -4,6 +4,7 @@ import { effectTargetSpec } from './effects.js';
 import { other } from './helpers.js';
 import { creatureHasFlag } from './skills.js';
 import { choosePocketCommand } from './pocket/ai.js';
+import { chooseRowsCommand } from './rows/ai.js';
 
 /**
  * Whose decision the game is waiting on. Almost always the active player —
@@ -24,6 +25,7 @@ export function actingPlayer(state: GameState): PlayerId {
  */
 export function chooseCommand(state: GameState, me: PlayerId): Command {
   if (state.rules.gameMode === 'pocket') return choosePocketCommand(state, me);
+  if (state.rules.gameMode === 'rows') return chooseRowsCommand(state, me);
   const p = state.players[me];
   const enemy = state.players[other(me)];
 

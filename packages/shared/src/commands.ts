@@ -1,4 +1,5 @@
 import type { EffectTarget, PlayerId } from './types.js';
+import type { RowKind } from './rows/types.js';
 
 export type AttackTarget =
   | { kind: 'creature'; instanceId: string }
@@ -58,4 +59,9 @@ export type Command =
   /** Attack with the Active's move. Ends the turn. */
   | { type: 'useMove'; player: PlayerId; moveIndex: number; target?: EffectTarget }
   /** After a knockout: pick the new Active. Sent by whoever lost theirs. */
-  | { type: 'promote'; player: PlayerId; targetInstanceId: string };
+  | { type: 'promote'; player: PlayerId; targetInstanceId: string }
+  // ---- Rows game mode (rules.gameMode 'rows') ----
+  /** Play one card from hand. `row` picks the lane for agile units and horn specials. */
+  | { type: 'playRowsCard'; player: PlayerId; instanceId: string; row?: RowKind }
+  /** Stop playing this round and bank your total. Both passed = the round ends. */
+  | { type: 'pass'; player: PlayerId };

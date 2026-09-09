@@ -2,9 +2,12 @@ import { randomUUID } from 'node:crypto';
 import type { WebSocket } from 'ws';
 import {
   applyCommand,
+  buildRowsDemoDeck,
+  buildStarterPocketDeck,
   createGame,
   mergeRules,
   padDeck,
+  POCKET_DEMO_CARDS,
   redactEvents,
   redactEventsForSpectator,
   redactFor,
@@ -63,7 +66,7 @@ export class Room {
 
   addPlayer(ws: WebSocket, name: string, deck: CardDef[]): void {
     const seatIndex = (this.seats[0] === null ? 0 : 1) as PlayerId;
-    const seat: Seat = { ws, name, deck: sanitizeDeck(deck), token: randomUUID(), graceTimer: null };
+    const seat: Seat = { ws, name, deck: sanitizeDeck(deck, this.rules), token: randomUUID(), graceTimer: null };
     this.seats[seatIndex] = seat;
     this.wire(ws, seatIndex);
     // The seat token lets this client reclaim its seat after a drop.
@@ -222,9 +225,14 @@ function other(p: PlayerId): PlayerId {
   return p === 0 ? 1 : 0;
 }
 
-/** Basic shape-check of a client-submitted deck, padded/trimmed to legal size. */
-function sanitizeDeck(deck: unknown): CardDef[] {
-  if (!Array.isArray(deck)) return padDeck([]);
+/** Basic shape-check of a client-submitted deck, padded/trimmed to the rules' deck size. */
+function sanitizeDeck(deck: unknown, rules: RulesConfig): CardDef[] {
+  // fill gaps with cards the room's game mode can actually play
+  const filler =
+    rules.gameMode === 'pocket' ? buildStarterPocketDeck(POCKET_DEMO_CARDS, rules.deckSize)
+    : rules.gameMode === 'rows' ? buildRowsDemoDeck()
+    : undefined;
+  if (!Array.isArray(deck)) return padDeck([], rules.deckSize, filler);
   const clean = deck.filter(
     (c): c is CardDef =>
       !!c &&
@@ -234,5 +242,5 @@ function sanitizeDeck(deck: unknown): CardDef[] {
       ['creature', 'equipment', 'spell'].includes((c as CardDef).type) &&
       typeof (c as CardDef).cost === 'number'
   );
-  return padDeck(clean);
+  return padDeck(clean, rules.deckSize, filler);
 }

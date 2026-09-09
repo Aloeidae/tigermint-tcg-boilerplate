@@ -9,6 +9,7 @@ import { mergeRules, type RulesConfig } from './rules.js';
 import { creatureHasFlag, getSkill, runHook, runRowHook } from './skills.js';
 import { tickStatuses } from './statuses.js';
 import { applyPocketCommand, initPocketGame } from './pocket/engine.js';
+import { applyRowsCommand, initRowsGame } from './rows/engine.js';
 
 export type CommandResult =
   | { ok: true; state: GameState; events: GameEvent[] }
@@ -93,6 +94,11 @@ export function createGame(setup: GameSetup): { state: GameState; events: GameEv
     initPocketGame(state, events, rng);
     return { state, events };
   }
+  // Rows mode opens with full hands and no mana.
+  if (rules.gameMode === 'rows') {
+    initRowsGame(state, events);
+    return { state, events };
+  }
   for (const p of state.players) {
     for (let i = 0; i < rules.openingHand; i++) drawCard(state, p.id, events);
   }
@@ -156,8 +162,9 @@ export function applyCommand(state: GameState, cmd: Command): CommandResult {
     return { ok: true, state: next, events };
   }
 
-  // Pocket mode has its own turn structure and command set.
+  // Pocket and rows modes have their own turn structures and command sets.
   if (state.rules.gameMode === 'pocket') return applyPocketCommand(state, cmd);
+  if (state.rules.gameMode === 'rows') return applyRowsCommand(state, cmd);
 
   // Mulligans are decided during the first round by BOTH players, so this
   // command (like concede) is exempt from the active-player check.

@@ -38,6 +38,7 @@ export function redactFor(state: GameState, player: PlayerId): PlayerView {
     blocks: state.blocks.map((b) => ({ ...b })),
     channel: state.channel ? structuredClone(state.channel) : state.channel,
     pendingPromote: state.pendingPromote,
+    rowsRound: state.rowsRound ? structuredClone(state.rowsRound) : undefined,
     you: {
       id: me.id,
       name: me.name,
@@ -55,6 +56,7 @@ export function redactFor(state: GameState, player: PlayerId): PlayerView {
       prizesTaken: me.prizesTaken,
       turnFlags: me.turnFlags ? structuredClone(me.turnFlags) : undefined,
       ready: state.setupDone ? state.setupDone[me.id] : undefined,
+      rowsBoard: me.rowsBoard ? structuredClone(me.rowsBoard) : undefined,
     },
     opponent: {
       id: opp.id,
@@ -70,6 +72,7 @@ export function redactFor(state: GameState, player: PlayerId): PlayerView {
       prizeCount: opp.prizes?.length,
       prizesTaken: opp.prizesTaken,
       ready: state.setupDone ? state.setupDone[opp.id] : undefined,
+      rowsBoard: opp.rowsBoard ? structuredClone(opp.rowsBoard) : undefined,
     },
   };
 }

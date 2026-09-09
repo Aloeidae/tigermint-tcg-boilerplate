@@ -1,5 +1,6 @@
 import type { RulesConfig } from './rules.js';
 import type { GameBlock, PocketTurnFlags } from './pocket/types.js';
+import type { RowsBlock, RowsBoard, RowsRoundState } from './rows/types.js';
 import type { OverlayLayout } from './overlay.js';
 
 export type PlayerId = 0 | 1;
@@ -118,6 +119,11 @@ export interface CardDef {
    * the same card playable under the standard engine.
    */
   game?: GameBlock;
+  /**
+   * Rows-mode definition (see rows/types.ts). Cards that carry one are
+   * playable under `rules.gameMode: 'rows'`.
+   */
+  rows?: RowsBlock;
 }
 
 /** A concrete copy of a card inside one game (deck/hand/graveyard). */
@@ -179,6 +185,10 @@ export interface PlayerState {
   prizesTaken?: number;
   /** Per-turn action flags (energy attachment, supporter, retreat…). */
   turnFlags?: PocketTurnFlags;
+
+  // ---- Rows mode only ----
+  /** This player's three battlefield rows (life doubles as round lives). */
+  rowsBoard?: RowsBoard;
 }
 
 export interface GameState {
@@ -208,6 +218,10 @@ export interface GameState {
   setupDone?: [boolean, boolean];
   /** Deterministic coin-flip cursor (advances with every flip). */
   rngCursor?: number;
+
+  // ---- Rows mode only ----
+  /** Round number, wins, passes, weather — all public. */
+  rowsRound?: RowsRoundState;
 }
 
 /** What one player is allowed to see. Produced by redact.ts. */
@@ -228,6 +242,8 @@ export interface OpponentView {
   prizesTaken?: number;
   /** Pocket mode setup: this player has placed their opening board. */
   ready?: boolean;
+  /** Rows mode: their side of the battlefield (public). */
+  rowsBoard?: RowsBoard;
 }
 
 export interface SelfView {
@@ -252,6 +268,8 @@ export interface SelfView {
   turnFlags?: PocketTurnFlags;
   /** Pocket mode setup: I have placed my opening board. */
   ready?: boolean;
+  /** Rows mode: my side of the battlefield. */
+  rowsBoard?: RowsBoard;
 }
 
 export interface PlayerView {
@@ -272,6 +290,8 @@ export interface PlayerView {
   channel?: { card: CardInstance; owner: PlayerId } | null;
   /** Pocket mode: who must promote a new Active before play continues. */
   pendingPromote?: PlayerId | null;
+  /** Rows mode: round number, wins, passes, weather (public). */
+  rowsRound?: RowsRoundState;
   you: SelfView;
   opponent: OpponentView;
 }

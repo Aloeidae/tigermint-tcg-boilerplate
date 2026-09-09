@@ -52,8 +52,11 @@ export interface RulesConfig {
    *   energy attachment, prizes, evolution, retreat, weakness/resistance.
    *   Cards need a `game` block; mana, combatStyle, and the standard combat
    *   knobs are ignored. Slot 0 of the row is the Active, the rest the Bench.
+   * 'rows': Three-Rows-style rules (rows/engine.ts) — no mana, one card per
+   *   turn, three battlefield rows, power totals, best-of-3 rounds decided by
+   *   passing. Cards need a `rows` block; startingLife is the round lives (2).
    */
-  gameMode: 'standard' | 'pocket';
+  gameMode: 'standard' | 'pocket' | 'rows';
   /** Pocket mode: prize cards per player (take the last one to win). */
   prizes: number;
   /** Pocket mode: prizes awarded for knocking out a star sticker. */
@@ -126,6 +129,21 @@ export const POCKET_QUICK: RulesConfig = {
 };
 
 /**
+ * Rows-mode baseline: no mana, the whole game is fought from one 10-card
+ * hand, and `startingLife` is round lives — lose two rounds and you're out.
+ */
+export const ROWS_STANDARD: RulesConfig = {
+  ...DEFAULT_RULES,
+  gameMode: 'rows',
+  deckSize: 25,
+  openingHand: 10,
+  maxHand: 20,
+  startingLife: 2,
+  firstPlayerDraws: false,
+  mulligan: false,
+};
+
+/**
  * Ready-made variants flavored after popular TCGs. The menu offers these;
  * add your own preset here and it appears automatically.
  */
@@ -171,6 +189,12 @@ export const RULE_PRESETS: Record<string, { label: string; description: string; 
       'Active & Bench, energy attachment, evolution, retreat, 3 prizes. 30-card decks, Bench of 3.',
     rules: { ...POCKET_QUICK },
   },
+  rows: {
+    label: 'Three Rows',
+    description:
+      'Battlefield rows and bluffing: no mana, one card a turn, pass to bank your lead. Best of three rounds — spies, weather, horns and scorch swing the board.',
+    rules: { ...ROWS_STANDARD },
+  },
   leagueStandard: {
     label: 'Pocket League: Standard',
     description:
@@ -206,7 +230,11 @@ export function mergeRules(partial?: Partial<RulesConfig> | null): RulesConfig {
   r.mulligan = bool(partial.mulligan, r.mulligan);
   r.combatStyle =
     partial.combatStyle === 'blockers' ? 'blockers' : partial.combatStyle === 'targeted' ? 'targeted' : r.combatStyle;
-  r.gameMode = partial.gameMode === 'pocket' ? 'pocket' : partial.gameMode === 'standard' ? 'standard' : r.gameMode;
+  r.gameMode =
+    partial.gameMode === 'pocket' ? 'pocket'
+    : partial.gameMode === 'rows' ? 'rows'
+    : partial.gameMode === 'standard' ? 'standard'
+    : r.gameMode;
   r.prizes = num(partial.prizes, 1, 10, r.prizes);
   r.starPrizes = num(partial.starPrizes, 1, 3, r.starPrizes);
   r.firstTurnNoAttack = bool(partial.firstTurnNoAttack, r.firstTurnNoAttack);

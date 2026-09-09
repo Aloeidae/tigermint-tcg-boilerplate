@@ -1,4 +1,5 @@
 import type { CardDef, CardType, Phase, PlayerId } from './types.js';
+import type { RowKind } from './rows/types.js';
 
 /**
  * Events describe what happened as a result of a command. The client uses them
@@ -42,7 +43,15 @@ export type GameEvent =
   | { type: 'prizeTaken'; player: PlayerId; count: number; remaining: number }
   | { type: 'channelPlayed'; player: PlayerId; cardName: string }
   | { type: 'handRevealed'; player: PlayerId; cardNames: string[] }
-  | { type: 'playerReady'; player: PlayerId };
+  | { type: 'playerReady'; player: PlayerId }
+  // ---- Rows game mode ----
+  /** `spy` marks a unit placed on the OPPONENT's side; `mustered` came from the deck. */
+  | { type: 'rowsCardPlayed'; player: PlayerId; cardName: string; row?: RowKind; spy?: boolean; mustered?: boolean }
+  | { type: 'weatherChanged'; melee: boolean; ranged: boolean; siege: boolean }
+  | { type: 'scorched'; cardNames: string[] }
+  | { type: 'passed'; player: PlayerId }
+  | { type: 'roundEnded'; round: number; totals: [number, number]; winner: PlayerId | null; wins: [number, number] }
+  | { type: 'roundStarted'; round: number; starter: PlayerId };
 
 /**
  * Strip information a given player shouldn't learn from the event stream
