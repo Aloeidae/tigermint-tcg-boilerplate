@@ -154,21 +154,6 @@ export const RULE_PRESETS: Record<string, { label: string; description: string; 
       'The classic stack-and-blockers duel: attack the player, the defender declares blockers. Free mulligan. Empty-deck draw loses.',
     rules: { ...DEFAULT_RULES, mulligan: true, combatStyle: 'blockers' },
   },
-  guarded: {
-    label: 'Mana Clash: Guarded',
-    description: 'Creatures guard their player: clear the row before going face. Fatigue deals growing damage. 30 life.',
-    rules: { ...DEFAULT_RULES, mustAttackCreaturesFirst: true, fatigue: 'damage', startingLife: 30 },
-  },
-  blitz: {
-    label: 'Mana Clash: Blitz',
-    description: 'No summoning sickness — creatures charge immediately. 15 life, 4-card opening hand.',
-    rules: { ...DEFAULT_RULES, summoningSickness: false, startingLife: 15, openingHand: 4 },
-  },
-  attrition: {
-    label: 'Mana Clash: Attrition',
-    description: 'The long game: 40 life, fatigue deals growing damage, defenders always strike back, free mulligan.',
-    rules: { ...DEFAULT_RULES, startingLife: 40, fatigue: 'damage', mulligan: true },
-  },
   tavern: {
     label: 'Tavern Clash',
     description:

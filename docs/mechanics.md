@@ -71,7 +71,7 @@ Attackers never choose targets. The flow:
 If the defender has no creatures at all, the attack resolves straight to
 the face with no block step.
 
-### Targeted combat (Guarded Arena, Blitz, Attrition)
+### Targeted combat (Tavern Clash)
 
 The attacker picks each attack's target — an enemy creature (a damage
 exchange) or the face:
@@ -83,7 +83,7 @@ exchange) or the face:
 
 The **face** is off-limits while any enemy creature has **Guard** (kill
 guards first — they also protect non-guard allies from being attacked), or
-whenever the preset sets `mustAttackCreaturesFirst`.
+whenever the rules set `mustAttackCreaturesFirst`.
 
 ### Both modes
 
@@ -187,16 +187,17 @@ to the graveyard like normal creatures (they were never in the deck).
 
 | Preset | Life | Twist |
 | --- | --- | --- |
-| **Classic Duel** | 20 | MTG-style blockers combat. Free mulligan. Empty-deck draw = loss. |
-| **Guarded Arena** | 30 | Every creature guards the face; fatigue deals growing damage instead of losing. |
-| **Blitz** | 15 | No summoning sickness (everything has Haste); 4-card opening hand. |
-| **Attrition** | 40 | Long game: growing fatigue damage, free mulligan. |
+| **Mana Clash: Duel** | 20 | Blockers combat: attack the player, the defender blocks. Free mulligan. Empty-deck draw = loss. |
+| **Tavern Clash** | 30 | Targeted combat, mana grows to 10, fatigue deals growing damage, once-per-turn hero power (2 mana: 1 damage anywhere). |
+
+(Pocket League and Three Rows run their own engines — see their sections.)
 
 Every knob (all in `shared/src/rules.ts`, all changeable per preset):
 `startingLife`, `deckSize`, `openingHand`, `maxHand`, `maxRow`, `manaCap`,
 `firstPlayerDraws`, `summoningSickness`, `attacksPerTurn`,
 `mustAttackCreaturesFirst`, `retaliation`, `fatigue` (`lose`/`damage`),
-`mulligan`, `combatStyle` (`targeted`/`blockers`).
+`mulligan`, `combatStyle` (`targeted`/`blockers`), `heroPower`
+(`none`/`strike`), and `gameMode` (`standard`/`pocket`/`rows`).
 
 Balance note for blockers decks: Guard does nothing under blockers combat
 (all attacks already aim at the player), while board width, First Strike,
