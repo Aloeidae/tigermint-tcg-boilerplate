@@ -162,10 +162,13 @@ to its attributes, and that's all the mapper reads.
   default (`THEME.card.overlay`) ← a pack.json top-level `layout` block
   (which the TigerMint-served manifest transports, so a card set ships its
   look) ← per-card overrides. In dev builds, the menu's **🎨 button** opens
-  a live editor: drag elements into place (drops snap to the nearest of
-  nine anchors), restyle everything from a side panel, watch the draft
-  apply to real games, and **Copy JSON** the finished layout into your
-  pack or theme. Small board cards auto-declutter via per-element
+  a live editor: drag elements into place (they follow the cursor, the nine
+  anchor bands light up, drops snap), nudge with the arrow keys (Shift =
+  coarse), slide any value with instant feedback, undo with Ctrl+Z, reset a
+  single element, watch the draft apply to real games, and **Copy JSON** the
+  finished layout into your pack or theme (**Paste** imports one back).
+  Hand- and board-size preview cards sit beside the editor so you see
+  exactly what small cards show — they auto-declutter via per-element
   `hideBelow` thresholds.
 
 Cards are **3:4** — the most common AI-generation aspect ratio — so generated
